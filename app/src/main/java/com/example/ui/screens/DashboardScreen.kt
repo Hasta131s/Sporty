@@ -434,28 +434,27 @@ fun HomeScreen(viewModel: MainViewModel, onQuickCardClick: (String) -> Unit) {
     val downloads by viewModel.downloadsList.collectAsState()
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
             Text(
                 text = "Tünaydın, ${viewModel.currentUser?.username ?: "Dinleyici"}",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
                 color = Color.White,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 24.dp)
             )
         }
 
         item {
             // Category exploration cards grid
-            Text("Müzik Keşfet", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("Müzik Keşfet", style = MaterialTheme.typography.titleMedium, color = Color.White)
+            Spacer(modifier = Modifier.height(12.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                modifier = Modifier.height(130.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                modifier = Modifier.height(140.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item { CategoryExploreCard("Türkçe Pop", Color(0xFF1DB954)) { onQuickCardClick("Türkçe Pop 2026") } }
                 item { CategoryExploreCard("Global Top 50", Color(0xFFE91E63)) { onQuickCardClick("Global Top 50") } }
@@ -467,7 +466,7 @@ fun HomeScreen(viewModel: MainViewModel, onQuickCardClick: (String) -> Unit) {
         // Favorites item compilations
         if (favorites.isNotEmpty()) {
             item {
-                Text("Beğendiğin Şarkılar", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Beğendiğin Şarkılar", style = MaterialTheme.typography.titleMedium, color = Color.White)
             }
             items(favorites.take(6)) { fav ->
                 val song = Song(fav.songId, fav.title, fav.artist, fav.thumbnail, fav.duration, fav.source, fav.filename)
@@ -485,7 +484,7 @@ fun HomeScreen(viewModel: MainViewModel, onQuickCardClick: (String) -> Unit) {
         // Download lists compilation
         if (downloads.isNotEmpty()) {
             item {
-                Text("Çevrimdışı İndirilenler", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.padding(top = 8.dp))
+                Text("Çevrimdışı İndirilenler", style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(top = 8.dp))
             }
             items(downloads.take(4)) { dl ->
                 val song = Song(dl.videoId, dl.title, dl.artist, dl.thumbnail, "", "download", dl.filename)
@@ -512,14 +511,14 @@ fun CategoryExploreCard(label: String, tint: Color, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(64.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(tint)
             .clickable { onClick() }
             .padding(12.dp),
-        contentAlignment = Alignment.CenterStart
+        contentAlignment = Alignment.TopStart
     ) {
-        Text(label, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(label, style = MaterialTheme.typography.labelLarge, color = Color.White)
     }
 }
 
@@ -1409,15 +1408,14 @@ fun MiniPlayer(
                 Text(
                     text = track.title,
                     color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = track.artist,
                     color = Color.LightGray,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.labelMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1558,13 +1556,22 @@ fun FullPlayerOverlay(
                 Text(track.artist, fontSize = 14.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
 
-            IconButton(onClick = onToggleLike) {
-                Icon(
-                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = null,
-                    tint = if (isLiked) MaterialTheme.colorScheme.primary else Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { if (!isDownloaded) onDownload() }) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = null,
+                        tint = if (isDownloaded) Color(0xFF1DB954) else Color.White
+                    )
+                }
+                IconButton(onClick = onToggleLike) {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (isLiked) MaterialTheme.colorScheme.primary else Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
 
@@ -1598,12 +1605,12 @@ fun FullPlayerOverlay(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Repeat switch
-            IconButton(onClick = onToggleRepeat) {
+            // Shuffle switch (placeholder for visual)
+            IconButton(onClick = { /* TODO Shuffle */ }) {
                 Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
-                    tint = if (isRepeat) MaterialTheme.colorScheme.primary else Color.White
+                    imageVector = Icons.Default.Shuffle,
+                    contentDescription = "Shuffle",
+                    tint = Color.White.copy(alpha = 0.5f)
                 )
             }
 
@@ -1616,7 +1623,7 @@ fun FullPlayerOverlay(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable { onTogglePlay() },
                 contentAlignment = Alignment.Center
             ) {
@@ -1636,12 +1643,12 @@ fun FullPlayerOverlay(
                 Icon(Icons.Default.SkipNext, contentDescription = "Next", tint = Color.White, modifier = Modifier.size(40.dp))
             }
 
-            // Download toggle offline (DropDown acts as download)
-            IconButton(onClick = { if (!isDownloaded) onDownload() }) {
+            // Repeat toggle
+            IconButton(onClick = onToggleRepeat) {
                 Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    tint = if (isDownloaded) Color(0xFF4CAF50) else Color.White
+                    imageVector = Icons.Default.Repeat,
+                    contentDescription = "Repeat",
+                    tint = if (isRepeat) MaterialTheme.colorScheme.primary else Color.White
                 )
             }
         }
@@ -1710,66 +1717,71 @@ fun BottomNavigationBar(activeTab: DashboardTab, onTabSelected: (DashboardTab) -
             selected = activeTab == DashboardTab.HOME,
             onClick = { onTabSelected(DashboardTab.HOME) },
             icon = { Icon(Icons.Filled.Home, contentDescription = "Ana Sayfa") },
-            label = { Text("Ana Sayfa", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            label = { Text("Ana Sayfa", fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
                 selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
-            )
+            ),
+            alwaysShowLabel = false
         )
         NavigationBarItem(
             selected = activeTab == DashboardTab.SEARCH,
             onClick = { onTabSelected(DashboardTab.SEARCH) },
             icon = { Icon(Icons.Filled.Search, contentDescription = "Ara") },
-            label = { Text("Ara", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            label = { Text("Ara", fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
                 selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
-            )
+            ),
+            alwaysShowLabel = false
         )
         NavigationBarItem(
             selected = activeTab == DashboardTab.LIBRARY,
             onClick = { onTabSelected(DashboardTab.LIBRARY) },
             icon = { Icon(Icons.Filled.LibraryMusic, contentDescription = "Kitaplık") },
-            label = { Text("Kitaplık", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            label = { Text("Kitaplık", fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
                 selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
-            )
+            ),
+            alwaysShowLabel = false
         )
         NavigationBarItem(
             selected = activeTab == DashboardTab.DOWNLOADS,
             onClick = { onTabSelected(DashboardTab.DOWNLOADS) },
             icon = { Icon(Icons.Filled.Download, contentDescription = "İndirilenler") },
-            label = { Text("İndirilenler", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            label = { Text("İndir", fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
                 selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
-            )
+            ),
+            alwaysShowLabel = false
         )
         NavigationBarItem(
             selected = activeTab == DashboardTab.LYRICS,
             onClick = { onTabSelected(DashboardTab.LYRICS) },
             icon = { Icon(Icons.Filled.Lyrics, contentDescription = "Sözler") },
-            label = { Text("Sözler", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            label = { Text("Sözler", fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
                 selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
-            )
+            ),
+            alwaysShowLabel = false
         )
     }
 }
