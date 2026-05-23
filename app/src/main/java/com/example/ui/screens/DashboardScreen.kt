@@ -86,7 +86,7 @@ fun DashboardScreen(viewModel: MainViewModel, onOpenAdmin: () -> Unit) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // TOP HEADER
                 TopHeaderSection(
-                    siteName = siteSettings?.siteName ?: "StreamHub Pro",
+                    siteName = siteSettings?.siteName ?: "Flofys",
                     logoUrl = siteSettings?.logoUrl ?: "",
                     userAvatar = user?.avatarUrl ?: "",
                     userName = user?.username ?: "",
@@ -1382,42 +1382,42 @@ fun MiniPlayer(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .background(Color(0xFF1B1B1B))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFF282828))
             .clickable { onExpand() }
             .testTag("mini_player")
     ) {
         Row(
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp),
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
                 model = track.thumbnail,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(42.dp)
                     .clip(RoundedCornerShape(4.dp)),
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = track.title,
                     color = Color.White,
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = track.artist,
-                    color = Color.Gray,
-                    fontSize = 11.sp,
+                    color = Color.LightGray,
+                    fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1428,40 +1428,29 @@ fun MiniPlayer(
                     imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Like",
                     tint = if (isLiked) MaterialTheme.colorScheme.primary else Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
-            IconButton(onClick = onTogglePlay) {
+            IconButton(onClick = onTogglePlay, modifier = Modifier.size(36.dp)) {
                 if (isBuffering) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
                 } else {
-                    if (isPlaying) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(3.dp),
-                            modifier = Modifier.size(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(Color.White))
-                            Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(Color.White))
-                        }
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }
-
+        
         // Fine progress bar on extremely bottom edge
         LinearProgressIndicator(
             progress = progress,
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = Color.White.copy(alpha = 0.1f),
+            color = Color.White,
+            trackColor = Color.White.copy(alpha = 0.2f),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(2.dp)
@@ -1619,13 +1608,13 @@ fun FullPlayerOverlay(
             }
 
             IconButton(onClick = onPrev) {
-                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Prev", tint = Color.White, modifier = Modifier.size(36.dp))
+                Icon(Icons.Default.SkipPrevious, contentDescription = "Prev", tint = Color.White, modifier = Modifier.size(40.dp))
             }
 
             // Big play key
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(72.dp)
                     .clip(CircleShape)
                     .background(Color.White)
                     .clickable { onTogglePlay() },
@@ -1634,28 +1623,17 @@ fun FullPlayerOverlay(
                 if (isBuffering) {
                     CircularProgressIndicator(modifier = Modifier.size(28.dp), color = Color.Black)
                 } else {
-                    if (isPlaying) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(5.dp),
-                            modifier = Modifier.size(20.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(modifier = Modifier.width(5.dp).fillMaxHeight().background(Color.Black))
-                            Box(modifier = Modifier.width(5.dp).fillMaxHeight().background(Color.Black))
-                        }
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            tint = Color.Black,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play",
+                        tint = Color.Black,
+                        modifier = Modifier.size(36.dp)
+                    )
                 }
             }
 
             IconButton(onClick = onNext) {
-                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Next", tint = Color.White, modifier = Modifier.size(36.dp))
+                Icon(Icons.Default.SkipNext, contentDescription = "Next", tint = Color.White, modifier = Modifier.size(40.dp))
             }
 
             // Download toggle offline (DropDown acts as download)

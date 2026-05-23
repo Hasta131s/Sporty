@@ -67,27 +67,11 @@ fun LoginScreen(viewModel: MainViewModel) {
                 painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = "App Logo",
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(100.dp)
                     .clip(RoundedCornerShape(20.dp))
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Flofys",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = "Premium Müzik Deneyimi",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
-                textAlign = TextAlign.Center
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Animated Header Title (Giriş Yap vs Kayıt Ol)
             AnimatedContent(

@@ -789,14 +789,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         if (currentQueue.isEmpty()) return
-        val prevIndex = queueIndex - 1
-        if (prevIndex >= 0) {
-            playTrack(currentQueue[prevIndex], currentQueue)
-        } else {
-            // Re-start same track if it's the first one
+        
+        // If played more than 3 seconds, or there is no previous track, restart current track
+        if ((player?.currentPosition ?: 0) > 3000 || queueIndex - 1 < 0) {
             player?.seekTo(0)
             trackCurrentPosition = 0f
             trackCurrentPositionText = "0:00"
+        } else {
+            val prevIndex = queueIndex - 1
+            playTrack(currentQueue[prevIndex], currentQueue)
         }
     }
 

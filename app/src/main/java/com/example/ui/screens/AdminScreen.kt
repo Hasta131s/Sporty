@@ -37,7 +37,7 @@ fun AdminScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var bannerImage by remember { mutableStateOf("") }
     var bannerLink by remember { mutableStateOf("") }
 
-    var settingsName by remember { mutableStateOf(settings?.siteName ?: "StreamHub Pro") }
+    var settingsName by remember { mutableStateOf(settings?.siteName ?: "Flofys") }
     var settingsLogo by remember { mutableStateOf(settings?.logoUrl ?: "") }
     var settingsPassword by remember { mutableStateOf("") }
 
@@ -52,7 +52,7 @@ fun AdminScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         topBar = {
             @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
-                title = { Text("StreamHub Yönetim Paneli", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text("Flofys Yönetim Paneli", fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
