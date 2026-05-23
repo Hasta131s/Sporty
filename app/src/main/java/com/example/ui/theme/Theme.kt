@@ -20,16 +20,16 @@ fun MyApplicationTheme(
     }
 
     val customDarkColorScheme = darkColorScheme(
-        primary = accentColor,
-        secondary = Color(0xFF1A1A1A),
-        background = Color(0xFF090909),
-        surface = Color(0xFF121212),
-        onPrimary = Color.Black,
-        onSecondary = Color.White,
-        onBackground = Color.White,
-        onSurface = Color.White,
-        surfaceVariant = Color(0xFF242424),
-        onSurfaceVariant = Color(0xFFB3B3B3)
+        primary = SpotifyGreen,
+        secondary = SurfaceVariantDark,
+        background = DarkBackground,
+        surface = SurfaceDark,
+        onPrimary = White,
+        onSecondary = White,
+        onBackground = White,
+        onSurface = White,
+        surfaceVariant = SurfaceVariantDark,
+        onSurfaceVariant = TextGray
     )
 
     MaterialTheme(

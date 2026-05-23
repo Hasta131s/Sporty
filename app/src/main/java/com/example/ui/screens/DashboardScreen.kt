@@ -1702,11 +1702,11 @@ fun BottomNavigationBar(activeTab: DashboardTab, onTabSelected: (DashboardTab) -
         NavigationBarItem(
             selected = activeTab == DashboardTab.HOME,
             onClick = { onTabSelected(DashboardTab.HOME) },
-            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-            label = { Text("Ana Sayfa", fontSize = 10.sp) },
+            icon = { Icon(Icons.Filled.Home, contentDescription = "Ana Sayfa") },
+            label = { Text("Ana Sayfa", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
@@ -1715,11 +1715,11 @@ fun BottomNavigationBar(activeTab: DashboardTab, onTabSelected: (DashboardTab) -
         NavigationBarItem(
             selected = activeTab == DashboardTab.SEARCH,
             onClick = { onTabSelected(DashboardTab.SEARCH) },
-            icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-            label = { Text("Ara", fontSize = 10.sp) },
+            icon = { Icon(Icons.Filled.Search, contentDescription = "Ara") },
+            label = { Text("Ara", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
@@ -1728,11 +1728,11 @@ fun BottomNavigationBar(activeTab: DashboardTab, onTabSelected: (DashboardTab) -
         NavigationBarItem(
             selected = activeTab == DashboardTab.LIBRARY,
             onClick = { onTabSelected(DashboardTab.LIBRARY) },
-            icon = { Icon(Icons.Default.List, contentDescription = "Library") },
-            label = { Text("Kitaplık", fontSize = 10.sp) },
+            icon = { Icon(Icons.Filled.LibraryMusic, contentDescription = "Kitaplık") },
+            label = { Text("Kitaplık", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
@@ -1741,11 +1741,11 @@ fun BottomNavigationBar(activeTab: DashboardTab, onTabSelected: (DashboardTab) -
         NavigationBarItem(
             selected = activeTab == DashboardTab.DOWNLOADS,
             onClick = { onTabSelected(DashboardTab.DOWNLOADS) },
-            icon = { Icon(Icons.Default.ArrowDropDown, contentDescription = "Downloads") },
-            label = { Text("İndirilenler", fontSize = 10.sp) },
+            icon = { Icon(Icons.Filled.Download, contentDescription = "İndirilenler") },
+            label = { Text("İndirilenler", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
@@ -1754,11 +1754,11 @@ fun BottomNavigationBar(activeTab: DashboardTab, onTabSelected: (DashboardTab) -
         NavigationBarItem(
             selected = activeTab == DashboardTab.LYRICS,
             onClick = { onTabSelected(DashboardTab.LYRICS) },
-            icon = { Icon(Icons.Default.Star, contentDescription = "Lyrics") },
-            label = { Text("Sözler", fontSize = 10.sp) },
+            icon = { Icon(Icons.Filled.Lyrics, contentDescription = "Sözler") },
+            label = { Text("Sözler", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = Color.White,
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray,
                 indicatorColor = Color.Transparent
