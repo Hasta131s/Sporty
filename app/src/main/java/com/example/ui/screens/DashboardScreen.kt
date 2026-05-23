@@ -325,13 +325,6 @@ fun TopHeaderSection(
                         .clip(RoundedCornerShape(8.dp))
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = siteName,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
         }
 
         Row(

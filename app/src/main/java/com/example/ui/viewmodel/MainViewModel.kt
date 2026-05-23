@@ -752,16 +752,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun togglePlay() {
         val player = mediaPlayer ?: return
-        if (isTrackPlaying) {
-            player.pause()
-            isTrackPlaying = false
-            stopProgressTracker()
-            currentTrack?.let { showNotification(it, false) }
-        } else {
-            player.start()
-            isTrackPlaying = true
-            startProgressTracker()
-            currentTrack?.let { showNotification(it, true) }
+        try {
+            if (isTrackPlaying) {
+                player.pause()
+                isTrackPlaying = false
+                stopProgressTracker()
+                currentTrack?.let { showNotification(it, false) }
+            } else {
+                player.start()
+                isTrackPlaying = true
+                startProgressTracker()
+                currentTrack?.let { showNotification(it, true) }
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "togglePlay error", e)
         }
     }
 
@@ -781,23 +785,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun prev() {
-        val player = mediaPlayer
-        if (player != null && player.currentPosition > 3500) {
-            player.seekTo(0)
-            trackCurrentPosition = 0f
-            trackCurrentPositionText = "0:00"
-            return
-        }
         if (currentQueue.isEmpty()) return
         
-        // If played more than 3 seconds, or there is no previous track, restart current track
-        if ((player?.currentPosition ?: 0) > 3000 || queueIndex - 1 < 0) {
-            player?.seekTo(0)
-            trackCurrentPosition = 0f
-            trackCurrentPositionText = "0:00"
-        } else {
-            val prevIndex = queueIndex - 1
-            playTrack(currentQueue[prevIndex], currentQueue)
+        try {
+            val player = mediaPlayer
+            val currentPos = player?.currentPosition ?: 0
+            
+            // If played more than 3 seconds, or there is no previous track, restart current track
+            if (currentPos > 3000 || queueIndex - 1 < 0) {
+                player?.seekTo(0)
+                trackCurrentPosition = 0f
+                trackCurrentPositionText = "0:00"
+            } else {
+                val prevIndex = queueIndex - 1
+                playTrack(currentQueue[prevIndex], currentQueue)
+            }
+        } catch (e: Exception) {
+            // Fallback if player throws illegal state
+            if (queueIndex - 1 >= 0) {
+                playTrack(currentQueue[queueIndex - 1], currentQueue)
+            }
         }
     }
 
@@ -817,15 +824,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         stopProgressTracker()
         progressTrackerJob = viewModelScope.launch {
             while (true) {
-                val player = mediaPlayer
-                if (player != null && isTrackPlaying) {
-                    val current = player.currentPosition
-                    val duration = player.duration
-                    if (duration > 0) {
-                        trackCurrentPosition = current.toFloat() / duration.toFloat()
-                        trackCurrentPositionText = formatMillis(current)
-                        trackDurationText = formatMillis(duration)
+                try {
+                    val player = mediaPlayer
+                    if (player != null && isTrackPlaying) {
+                        val current = player.currentPosition
+                        val duration = player.duration
+                        if (duration > 0) {
+                            trackCurrentPosition = current.toFloat() / duration.toFloat()
+                            trackCurrentPositionText = formatMillis(current)
+                            trackDurationText = formatMillis(duration)
+                        }
                     }
+                } catch (e: Exception) {
+                    // Ignore IllegalStateException from Media Player if it is resetting
                 }
                 kotlinx.coroutines.delay(1000)
             }
