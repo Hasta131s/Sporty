@@ -1,6 +1,6 @@
 {
-  "name": "StreamHub Pro",
-  "description": "Premium music streaming application styled like Spotify with offline play, personalized playlists, lyrics support, and profile customization.",
+  "name": "Flofys",
+  "description": "Flofys Premium music streaming application with offline play, personalized playlists, lyrics support, and profile customization.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
