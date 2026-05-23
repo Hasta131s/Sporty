@@ -82,6 +82,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var searchSuggestions by mutableStateOf<List<String>>(emptyList())
     var searchResults by mutableStateOf<List<Song>>(emptyList())
     var isSearching by mutableStateOf(false)
+    private var searchDebounceJob: Job? = null
 
     // Lyrics Search State
     var lyricsQuery by mutableStateOf("")
@@ -364,12 +365,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         searchQuery = newQuery
         if (newQuery.length < 2) {
             searchSuggestions = emptyList()
+            searchResults = emptyList()
             return
         }
+        
+        // 1. Get suggestions instantly
         viewModelScope.launch(Dispatchers.IO) {
             val suggestions = MusicApiService.getSuggestions(newQuery)
             withContext(Dispatchers.Main) {
-                searchSuggestions = suggestions
+                // Keep suggestions updated
+                if (searchQuery == newQuery) {
+                    searchSuggestions = suggestions
+                }
+            }
+        }
+
+        // 2. Debounce instant search trigger
+        searchDebounceJob?.cancel()
+        searchDebounceJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(750) // Wait 750ms after user stops typing
+            if (searchQuery == newQuery) {
+                performSearch(newQuery)
             }
         }
     }

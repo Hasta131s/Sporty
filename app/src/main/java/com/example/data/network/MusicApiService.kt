@@ -55,15 +55,95 @@ object MusicApiService {
         return emptyList()
     }
 
+    // Helper to parse YouTube Search JSON structure
+    fun parseSearchJson(root: JSONObject): List<Song> {
+        val results = mutableListOf<Song>()
+        try {
+            var contents = root.optJSONObject("contents")
+                ?.optJSONObject("twoColumnSearchResultsRenderer")
+                ?.optJSONObject("primaryContents")
+                ?.optJSONObject("sectionListRenderer")
+                ?.optJSONArray("contents")
+
+            if (contents == null) {
+                contents = root.optJSONObject("contents")
+                    ?.optJSONObject("sectionListRenderer")
+                    ?.optJSONArray("contents")
+            }
+
+            if (contents != null) {
+                for (i in 0 until contents.length()) {
+                    val itemSection = contents.optJSONObject(i)
+                        ?.optJSONObject("itemSectionRenderer")
+                        ?.optJSONArray("contents") ?: continue
+
+                    for (j in 0 until itemSection.length()) {
+                        val videoRenderer = itemSection.optJSONObject(j)?.optJSONObject("videoRenderer") ?: continue
+                        val videoId = videoRenderer.optString("videoId") ?: continue
+                        if (videoId.isEmpty() || videoId == "null") continue
+
+                        var title = "Unknown Title"
+                        val titleRuns = videoRenderer.optJSONObject("title")?.optJSONArray("runs")
+                        if (titleRuns != null && titleRuns.length() > 0) {
+                            title = titleRuns.getJSONObject(0).optString("text")
+                        } else {
+                            val simpleText = videoRenderer.optJSONObject("title")?.optString("simpleText")
+                            if (!simpleText.isNullOrEmpty()) title = simpleText
+                        }
+
+                        var artist = "YouTube Music"
+                        val ownerRuns = videoRenderer.optJSONObject("ownerText")?.optJSONArray("runs")
+                        if (ownerRuns != null && ownerRuns.length() > 0) {
+                            artist = ownerRuns.getJSONObject(0).optString("text")
+                        } else {
+                            val shortRuns = videoRenderer.optJSONObject("shortBylineText")?.optJSONArray("runs")
+                            if (shortRuns != null && shortRuns.length() > 0) {
+                                artist = shortRuns.getJSONObject(0).optString("text")
+                            }
+                        }
+
+                        var thumbnail = "https://img.youtube.com/vi/$videoId/mqdefault.jpg"
+                        val thumbnails = videoRenderer.optJSONObject("thumbnail")?.optJSONArray("thumbnails")
+                        if (thumbnails != null && thumbnails.length() > 0) {
+                            thumbnail = thumbnails.getJSONObject(0).optString("url")
+                            thumbnail = thumbnail.replace("hqdefault", "mqdefault")
+                        }
+
+                        var duration = ""
+                        val lengthText = videoRenderer.optJSONObject("lengthText")?.optString("simpleText")
+                        if (!lengthText.isNullOrEmpty()) {
+                            duration = lengthText
+                        }
+
+                        results.add(Song(
+                            id = videoId,
+                            title = title,
+                            artist = artist,
+                            thumbnail = thumbnail,
+                            duration = duration,
+                            source = "youtube"
+                        ))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MusicApiService", "Error parsing search JSON", e)
+        }
+        return results
+    }
+
     // 2. YouTube InnerTube Search API
     fun searchYouTube(query: String): List<Song> {
         val url = "https://www.youtube.com/youtubei/v1/search?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
         
+        // Using ANDROID client context to simulate official mobile client which bypasses typical restrictions
         val payload = JSONObject().apply {
             put("context", JSONObject().apply {
                 put("client", JSONObject().apply {
-                    put("clientName", "WEB")
-                    put("clientVersion", "2.20210721.00.00")
+                    put("clientName", "ANDROID")
+                    put("clientVersion", "19.05.35")
+                    put("hl", "tr")
+                    put("gl", "TR")
                 })
             })
             put("query", query)
@@ -74,69 +154,19 @@ object MusicApiService {
             .url(url)
             .post(requestBody)
             .header("Content-Type", "application/json")
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+            .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
             .build()
 
         val results = mutableListOf<Song>()
         try {
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    val body = response.body?.string() ?: return emptyList()
-                    val jsonResponse = JSONObject(body)
-                    
-                    // Traverse YouTube InnerTube Response json
-                    val sectionList = jsonResponse
-                        .optJSONObject("contents")
-                        ?.optJSONObject("twoColumnSearchResultsRenderer")
-                        ?.optJSONObject("primaryContents")
-                        ?.optJSONObject("sectionListRenderer")
-                        ?.optJSONArray("contents")
-
-                    val itemSection = sectionList?.optJSONObject(0)
-                        ?.optJSONObject("itemSectionRenderer")
-                        ?.optJSONArray("contents")
-
-                    if (itemSection != null) {
-                        for (i in 0 until itemSection.length()) {
-                            val videoRenderer = itemSection.optJSONObject(i)?.optJSONObject("videoRenderer") ?: continue
-                            val videoId = videoRenderer.optString("videoId") ?: continue
-                            
-                            var title = "Unknown Title"
-                            val titleRuns = videoRenderer.optJSONObject("title")?.optJSONArray("runs")
-                            if (titleRuns != null && titleRuns.length() > 0) {
-                                title = titleRuns.getJSONObject(0).optString("text")
-                            } else {
-                                val simpleText = videoRenderer.optJSONObject("title")?.optString("simpleText")
-                                if (!simpleText.isNullOrEmpty()) title = simpleText
-                            }
-
-                            var artist = "Unknown Artist"
-                            val ownerRuns = videoRenderer.optJSONObject("ownerText")?.optJSONArray("runs")
-                            if (ownerRuns != null && ownerRuns.length() > 0) {
-                                artist = ownerRuns.getJSONObject(0).optString("text")
-                            }
-
-                            var thumbnail = ""
-                            val thumbnails = videoRenderer.optJSONObject("thumbnail")?.optJSONArray("thumbnails")
-                            if (thumbnails != null && thumbnails.length() > 0) {
-                                thumbnail = thumbnails.getJSONObject(0).optString("url")
-                                thumbnail = thumbnail.replace("hqdefault", "mqdefault")
-                            }
-
-                            var duration = ""
-                            val lengthText = videoRenderer.optJSONObject("lengthText")?.optString("simpleText")
-                            if (!lengthText.isNullOrEmpty()) {
-                                duration = lengthText
-                            }
-
-                            results.add(Song(
-                                id = videoId,
-                                title = title,
-                                artist = artist,
-                                thumbnail = thumbnail,
-                                duration = duration,
-                                source = "youtube"
-                            ))
+                    val body = response.body?.string() ?: ""
+                    if (body.isNotEmpty()) {
+                        val jsonResponse = JSONObject(body)
+                        val parsed = parseSearchJson(jsonResponse)
+                        if (parsed.isNotEmpty()) {
+                            results.addAll(parsed)
                         }
                     }
                 }
@@ -145,47 +175,65 @@ object MusicApiService {
             Log.e("MusicApiService", "Error searching InnerTube", e)
         }
 
-        // HTML Scraping Fallback
+        // HTML Scraping Fallback (searches via results page and extracts ytInitialData state JSON)
         if (results.isEmpty()) {
             try {
-                val searchUrl = "https://www.youtube.com/results?search_query=${URLEncoder.encode(query)}"
+                val searchUrl = "https://www.youtube.com/results?search_query=${URLEncoder.encode(query)}&sp=EgIQAQ%253D%253D"
                 val fallbackRequest = Request.Builder()
                     .url(searchUrl)
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .header("Accept-Language", "tr,en;q=0.9")
                     .build()
                 client.newCall(fallbackRequest).execute().use { response ->
                     if (response.isSuccessful) {
                         val html = response.body?.string() ?: ""
-                        
-                        val videoIds = mutableListOf<String>()
-                        val videoIdMatcher = java.util.regex.Pattern.compile("\"videoId\":\"([^\"]{11})\"")
-                        val idMatcher = videoIdMatcher.matcher(html)
-                        while (idMatcher.find() && videoIds.size < 20) {
-                            val id = idMatcher.group(1)
-                            if (id != null && !videoIds.contains(id)) videoIds.add(id)
+                        val prefix = "var ytInitialData = "
+                        if (html.contains(prefix)) {
+                            val startIdx = html.indexOf(prefix) + prefix.length
+                            var endIdx = html.indexOf("};", startIdx)
+                            if (endIdx != -1) {
+                                endIdx += 1 // Include ending curly brace
+                                val jsonStr = html.substring(startIdx, endIdx)
+                                val initialDataObj = JSONObject(jsonStr)
+                                val parsed = parseSearchJson(initialDataObj)
+                                if (parsed.isNotEmpty()) {
+                                    results.addAll(parsed)
+                                }
+                            }
                         }
 
-                        val titles = mutableListOf<String>()
-                        val titleMatcher = java.util.regex.Pattern.compile("\"title\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+?)\"\\}\\]")
-                        val tMatcher = titleMatcher.matcher(html)
-                        while (tMatcher.find() && titles.size < videoIds.size) {
-                            titles.add(tMatcher.group(1) ?: "Unknown")
-                        }
+                        // Last resort regex matches if ytInitialData fails
+                        if (results.isEmpty()) {
+                            val videoIds = mutableListOf<String>()
+                            val videoIdMatcher = java.util.regex.Pattern.compile("\"videoId\":\"([^\"]{11})\"")
+                            val idMatcher = videoIdMatcher.matcher(html)
+                            while (idMatcher.find() && videoIds.size < 20) {
+                                val id = idMatcher.group(1)
+                                if (id != null && !videoIds.contains(id)) videoIds.add(id)
+                            }
 
-                        for (i in 0 until minOf(videoIds.size, titles.size)) {
-                            results.add(Song(
-                                id = videoIds[i],
-                                title = titles[i],
-                                artist = "YouTube Music",
-                                thumbnail = "https://img.youtube.com/vi/${videoIds[i]}/mqdefault.jpg",
-                                duration = "",
-                                source = "youtube"
-                            ))
+                            val titles = mutableListOf<String>()
+                            val titleMatcher = java.util.regex.Pattern.compile("\"title\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+?)\"\\}\\]")
+                            val tMatcher = titleMatcher.matcher(html)
+                            while (tMatcher.find() && titles.size < videoIds.size) {
+                                titles.add(tMatcher.group(1) ?: "Unknown")
+                            }
+
+                            for (i in 0 until minOf(videoIds.size, titles.size)) {
+                                results.add(Song(
+                                    id = videoIds[i],
+                                    title = titles[i],
+                                    artist = "YouTube Music",
+                                    thumbnail = "https://img.youtube.com/vi/${videoIds[i]}/mqdefault.jpg",
+                                    duration = "",
+                                    source = "youtube"
+                                ))
+                            }
                         }
                     }
                 }
             } catch (e: Exception) {
-                Log.e("MusicApiService", "Error searching YouTube fallback", e)
+                Log.e("MusicApiService", "Error searching YouTube HTML fallback", e)
             }
         }
 
@@ -194,23 +242,33 @@ object MusicApiService {
 
     // 3. YouTube Session Download API (RapidAPI parsed from PHP)
     fun getDownloadLink(videoId: String): String? {
-        val apiUrl = "https://yt-api.p.rapidapi.com/dl?id=$videoId"
+        val apiUrl = "https://youtube-mp36.p.rapidapi.com/dl?id=$videoId"
         val request = Request.Builder()
             .url(apiUrl)
-            .header("X-RapidAPI-Key", "a4045ed1d4msh6e87c936fa34978p1193c7jsn50ce376054f4")
-            .header("X-RapidAPI-Host", "yt-api.p.rapidapi.com")
+            .header("x-rapidapi-key", "6448bb7ff1mshd973524f6873a42p14bfb8jsn800441a82f14")
+            .header("x-rapidapi-host", "youtube-mp36.p.rapidapi.com")
             .build()
 
         try {
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     val body = response.body?.string() ?: return null
+                    Log.d("MusicApiService", "RapidAPI Response: $body")
                     val json = JSONObject(body)
-                    return json.optString("link")
+                    // The API returns status "ok" and link in the root
+                    val status = json.optString("status")
+                    if (status == "ok" || status == "success" || json.has("link")) {
+                        val link = json.optString("link")
+                        if (!link.isNullOrEmpty()) {
+                            return link
+                        }
+                    }
+                } else {
+                    Log.e("MusicApiService", "RapidAPI Fail: code = ${response.code}")
                 }
             }
         } catch (e: Exception) {
-            Log.e("MusicApiService", "Error calling RapidAPI downloader", e)
+            Log.e("MusicApiService", "Error calling RapidAPI youtube-mp36", e)
         }
         return null
     }
