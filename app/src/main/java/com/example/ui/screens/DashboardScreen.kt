@@ -304,7 +304,14 @@ fun TopHeaderSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF040404))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1A1A1A),
+                        Color(0xFF040404)
+                    )
+                )
+            )
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
