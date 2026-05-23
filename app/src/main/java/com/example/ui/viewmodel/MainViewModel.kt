@@ -2,7 +2,9 @@ package com.example.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.media.MediaPlayer
+import android.widget.Toast
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +52,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
     private val songListType = Types.newParameterizedType(List::class.java, Song::class.java)
     private val songAdapter = moshi.adapter<List<Song>>(songListType)
+    private val singleSongAdapter = moshi.adapter(Song::class.java)
 
     // Current Screen and User states
     var currentScreen by mutableStateOf<Screen>(Screen.Login)
@@ -109,9 +112,100 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var activeDownloadName by mutableStateOf("")
 
     private var progressTrackerJob: Job? = null
+    private val CHANNEL_ID = "music_channel"
+
+    private val mediaControlReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                "ACTION_PLAY_PAUSE" -> togglePlay()
+                "ACTION_NEXT" -> next()
+                "ACTION_PREV" -> prev()
+            }
+        }
+    }
+
+    private fun registerReceiver() {
+        val filter = android.content.IntentFilter().apply {
+            addAction("ACTION_PLAY_PAUSE")
+            addAction("ACTION_NEXT")
+            addAction("ACTION_PREV")
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            getApplication<Application>().registerReceiver(mediaControlReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            getApplication<Application>().registerReceiver(mediaControlReceiver, filter)
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val name = "Music Playback"
+            val descriptionText = "Shows current playing track"
+            val importance = android.app.NotificationManager.IMPORTANCE_LOW
+            val channel = android.app.NotificationChannel(CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+            }
+            val notificationManager: android.app.NotificationManager =
+                getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun showNotification(song: Song, isPlaying: Boolean) {
+        val context = getApplication<Application>()
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Pre-fetch cover bitmap if possible
+                var bitmap: android.graphics.Bitmap? = null
+                try {
+                    val loader = coil.ImageLoader(context)
+                    val request = coil.request.ImageRequest.Builder(context)
+                        .data(song.thumbnail)
+                        .allowHardware(false) // Disable hardware bitmaps so NotificationManager can read it
+                        .build()
+                    val result = loader.execute(request)
+                    if (result is coil.request.SuccessResult) {
+                        bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    }
+                } catch (e: Exception) {}
+
+                withContext(Dispatchers.Main) {
+                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                    
+                    val playPauseIntent = android.app.PendingIntent.getBroadcast(
+                        context, 0, Intent("ACTION_PLAY_PAUSE").setPackage(context.packageName), android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                    )
+                    val nextIntent = android.app.PendingIntent.getBroadcast(
+                        context, 1, Intent("ACTION_NEXT").setPackage(context.packageName), android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                    )
+                    val prevIntent = android.app.PendingIntent.getBroadcast(
+                        context, 2, Intent("ACTION_PREV").setPackage(context.packageName), android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                    )
+
+                    @Suppress("DEPRECATION")
+                    val builder = android.app.Notification.Builder(context, CHANNEL_ID)
+                        .setSmallIcon(com.example.R.drawable.app_logo)
+                        .setContentTitle(song.title)
+                        .setContentText(song.artist)
+                        .setLargeIcon(bitmap)
+                        .addAction(android.app.Notification.Action.Builder(android.graphics.drawable.Icon.createWithResource("android", android.R.drawable.ic_media_previous), "Previous", prevIntent).build())
+                        .addAction(android.app.Notification.Action.Builder(android.graphics.drawable.Icon.createWithResource("android", if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play), "Play/Pause", playPauseIntent).build())
+                        .addAction(android.app.Notification.Action.Builder(android.graphics.drawable.Icon.createWithResource("android", android.R.drawable.ic_media_next), "Next", nextIntent).build())
+                        .setStyle(android.app.Notification.MediaStyle().setShowActionsInCompactView(0, 1, 2))
+                        .setOngoing(isPlaying)
+
+                    notificationManager.notify(1, builder.build())
+                }
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Notification error", e)
+            }
+        }
+    }
 
     init {
         // Clear media player, load configs
+        createNotificationChannel()
+        registerReceiver()
         setupSiteSettings()
         loadAllBanners()
         checkSavedSession()
@@ -136,6 +230,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     currentScreen = Screen.Dashboard
                     loadUserDataFlows(user.id)
+                    
+                    // Recover last played song
+                    val savedSongJson = prefs.getString("last_played_song", null)
+                    if (savedSongJson != null) {
+                        try {
+                            val lastSong = singleSongAdapter.fromJson(savedSongJson)
+                            if (lastSong != null) {
+                                currentTrack = lastSong
+                                currentQueue = listOf(lastSong)
+                                queueIndex = 0
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Failed to restore last song", e)
+                        }
+                    }
                 } else {
                     prefs.edit().remove("logged_in_user_id").apply()
                 }
@@ -148,8 +257,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val settings = db.siteSettingsDao().getSettings()
             if (settings == null) {
                 val defaultSettings = SiteSettings(
-                    siteName = "StreamHub Pro",
-                    logoUrl = "https://ui-avatars.com/api/?name=StreamHub&background=1DB954&color=fff",
+                    siteName = "Flofys",
+                    logoUrl = "https://ui-avatars.com/api/?name=Flofys&background=1DB954&color=fff",
                     adminPasswordHash = "admin123" // default base
                 )
                 db.siteSettingsDao().insertSettings(defaultSettings)
@@ -527,55 +636,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Offline download management ---
     fun downloadTrack(song: Song) {
-        val user = currentUser ?: return
-        if (downloadsList.value.any { it.videoId == song.id }) {
-            return // already downloaded
-        }
-
-        activeDownloadName = song.title
-        activeDownloadProgress = 0f
-
-        viewModelScope.launch(Dispatchers.IO) {
-            // 1. Get Stream Link
-            val streamLink = MusicApiService.getDownloadLink(song.id)
-            if (streamLink.isNullOrEmpty()) {
-                withContext(Dispatchers.Main) {
-                    activeDownloadProgress = null
-                    Log.e("MainViewModel", "Failed to retrieve stream link for ${song.title}")
-                }
-                return@launch
-            }
-
-            // 2. Download actually to File Path
-            val file = MusicApiService.downloadSongFile(getApplication(), song.id, streamLink) { progress ->
-                viewModelScope.launch(Dispatchers.Main) {
-                    activeDownloadProgress = progress
-                }
-            }
-
-            if (file != null && file.exists()) {
-                val textDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-                val downloadRecord = Download(
-                    id = "dl_" + UUID.randomUUID().toString().substring(0, 8),
-                    userId = user.id,
-                    videoId = song.id,
-                    title = song.title,
-                    artist = song.artist,
-                    thumbnail = song.thumbnail,
-                    filename = file.name,
-                    filepath = file.absolutePath,
-                    downloadedAt = textDate,
-                    size = file.length(),
-                    shared = true
-                )
-                db.downloadDao().insertDownload(downloadRecord)
-            }
-
-            withContext(Dispatchers.Main) {
-                activeDownloadProgress = null
-                activeDownloadName = ""
-            }
-        }
+        Toast.makeText(getApplication(), "Bu özellik şuanda kullanılamıyor", Toast.LENGTH_SHORT).show()
+        return
     }
 
     fun deleteDownload(downloadId: String) {
@@ -598,83 +660,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Lyrics Genius Search AND Gemini Fallback ---
     fun searchLyrics(query: String) {
-        if (query.isBlank()) return
-        lyricsQuery = query
-        isLyricsLoading = true
-        lyricsResultTitle = query
-        lyricsResultText = ""
-        lyricsResultBio = ""
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val md = MusicApiService.md5(query.lowercase().trim())
-            // First check Room Cache
-            val cache = db.lyricsCacheDao().getLyricsById(md)
-            if (cache != null) {
-                withContext(Dispatchers.Main) {
-                    lyricsResultTitle = cache.fullTitle
-                    lyricsResultArt = cache.artUrl
-                    lyricsResultText = cache.lyrics
-                    lyricsResultBio = cache.bio
-                    isLyricsLoading = false
-                }
-                return@launch
-            }
-
-            // Genius search
-            var lyrics: String? = null
-            var bio = ""
-            var titleText = query
-            var artUrl = ""
-
-            val geniusSongUrl = MusicApiService.searchGeniusSongUrl(query)
-            if (geniusSongUrl != null) {
-                // We got the Genius page. However, extracting raw html could be extremely flaky,
-                // so we use our Gemini API client on a background thread to generate perfectly
-                // exact formatted lyrics and biography for the song! This is 100% stable.
-                val res = GeminiClient.getSongLyricsAndBio(query, "")
-                lyrics = res.first
-                bio = res.second
-                titleText = query
-            } else {
-                // Direct Gemini API fallback
-                val res = GeminiClient.getSongLyricsAndBio(query, "")
-                lyrics = res.first
-                bio = res.second
-                titleText = query
-            }
-
-            if (!lyrics.isNullOrEmpty()) {
-                val record = LyricsCache(
-                    id = md,
-                    query = query,
-                    fullTitle = titleText,
-                    artUrl = artUrl,
-                    lyrics = lyrics,
-                    bio = bio,
-                    cachedAt = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
-                )
-                db.lyricsCacheDao().insertLyrics(record)
-
-                withContext(Dispatchers.Main) {
-                    lyricsResultTitle = titleText
-                    lyricsResultArt = artUrl
-                    lyricsResultText = lyrics
-                    lyricsResultBio = bio
-                    isLyricsLoading = false
-                }
-            } else {
-                withContext(Dispatchers.Main) {
-                    lyricsResultText = "Şarkı sözleri bulunamadı. Lütfen daha sonra tekrar deneyin."
-                    isLyricsLoading = false
-                }
-            }
-        }
+        Toast.makeText(getApplication(), "Bu özellik şuanda kullanılamıyor", Toast.LENGTH_SHORT).show()
+        return
     }
 
     fun quickSearchLyrics(title: String, artist: String) {
-        lyricsQuery = "$title $artist"
-        currentTab = DashboardTab.LYRICS
-        searchLyrics("$title $artist")
+        Toast.makeText(getApplication(), "Bu özellik şuanda kullanılamıyor", Toast.LENGTH_SHORT).show()
+        return
     }
 
     // --- Comprehensive MediaPlayer Music Control Engine ---
@@ -683,6 +675,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         currentTrack = song
         currentQueue = queue
         queueIndex = queue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
+        
+        // Save to cache for offline recovery
+        try {
+            val prefs = getApplication<Application>().getSharedPreferences("streamhub_prefs", Context.MODE_PRIVATE)
+            prefs.edit().putString("last_played_song", singleSongAdapter.toJson(song)).apply()
+        } catch (e: Exception) {}
         
         isTrackPlaying = false
         isTrackBuffering = true
@@ -697,6 +695,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     viewModelScope.launch(Dispatchers.Main) {
                         isTrackBuffering = false
                         isTrackPlaying = true
+                        showNotification(currentTrack!!, true)
                         mp.start()
                         trackDurationText = formatMillis(mp.duration)
                         startProgressTracker()
@@ -757,10 +756,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             player.pause()
             isTrackPlaying = false
             stopProgressTracker()
+            currentTrack?.let { showNotification(it, false) }
         } else {
             player.start()
             isTrackPlaying = true
             startProgressTracker()
+            currentTrack?.let { showNotification(it, true) }
         }
     }
 
@@ -792,8 +793,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (prevIndex >= 0) {
             playTrack(currentQueue[prevIndex], currentQueue)
         } else {
-            // play same or go to end
-            playTrack(currentQueue[currentQueue.size - 1], currentQueue)
+            // Re-start same track if it's the first one
+            player?.seekTo(0)
+            trackCurrentPosition = 0f
+            trackCurrentPositionText = "0:00"
         }
     }
 
@@ -845,6 +848,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
+        try {
+            getApplication<Application>().unregisterReceiver(mediaControlReceiver)
+        } catch (e: Exception) {}
         stopPlayback()
     }
 

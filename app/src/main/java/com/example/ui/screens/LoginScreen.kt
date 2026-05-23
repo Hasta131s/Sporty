@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.example.R
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -60,20 +63,18 @@ fun LoginScreen(viewModel: MainViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // App Logo Icon
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
+            Image(
+                painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = "App Logo",
-                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .size(68.dp)
-                    .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(34.dp))
-                    .padding(12.dp)
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(20.dp))
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "StreamHub Pro",
+                text = "Flofys",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

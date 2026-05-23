@@ -167,6 +167,7 @@ fun DashboardScreen(viewModel: MainViewModel, onOpenAdmin: () -> Unit) {
                         onToggleLike = { viewModel.toggleFavorite(track) },
                         onDownload = { viewModel.downloadTrack(track) },
                         isDownloaded = viewModel.downloadsList.collectAsState().value.any { it.videoId == track.id },
+                        onAddToPlaylist = { showAddToPlaylistDialog = it },
                         viewModel = viewModel
                     )
                 }
@@ -310,24 +311,11 @@ fun TopHeaderSection(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (logoUrl.isEmpty() || logoUrl.contains("ui-avatars.com")) {
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            androidx.compose.ui.graphics.Brush.linearGradient(
-                                colors = listOf(Color(0xFF1DB954), Color(0xFF0D7E33))
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Logo",
-                        tint = Color.White,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.app_logo),
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(38.dp).clip(RoundedCornerShape(8.dp))
+                )
             } else {
                 AsyncImage(
                     model = logoUrl,
@@ -1292,14 +1280,13 @@ fun ProfileCustomizeScreen(viewModel: MainViewModel) {
                     .background(Color(0xFF121212))
                     .padding(14.dp)
             ) {
-                AppColorTheme.values().forEach { configTheme ->
+                AppColorTheme.values().take(3).forEach { configTheme ->
                     val isSelected = viewModel.activeTheme == configTheme
                     val accentColor = when (configTheme) {
                         AppColorTheme.SPOTIFY_GREEN -> Color(0xFF1DB954)
                         AppColorTheme.COSMIC_INDIGO -> Color(0xFF673AB7)
                         AppColorTheme.CYBERPUNK_AMBER -> Color(0xFFFFB300)
-                        AppColorTheme.NEON_PINK -> Color(0xFFE91E63)
-                        AppColorTheme.CRIMSON_RED -> Color(0xFFD50000)
+                        else -> Color(0xFF1DB954)
                     }
 
                     Row(
@@ -1325,6 +1312,36 @@ fun ProfileCustomizeScreen(viewModel: MainViewModel) {
 
                         if (isSelected) {
                             Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Tema Ön İzleme", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                // Beautiful preview
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF222222)).padding(16.dp)
+                ) {
+                    Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.align(Alignment.Center).size(24.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Box(modifier = Modifier.width(80.dp).height(12.dp).background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(4.dp)))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Box(modifier = Modifier.width(50.dp).height(8.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)))
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        Button(
+                            onClick = {},
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            shape = CircleShape,
+                            modifier = Modifier.size(36.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -1472,6 +1489,7 @@ fun FullPlayerOverlay(
     onToggleRepeat: () -> Unit,
     onDownload: () -> Unit,
     onCollapse: () -> Unit,
+    onAddToPlaylist: (Song) -> Unit,
     viewModel: MainViewModel
 ) {
     var showPlayerLyrics by remember { mutableStateOf(false) }
@@ -1497,8 +1515,31 @@ fun FullPlayerOverlay(
                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Collapse", tint = Color.White, modifier = Modifier.size(28.dp))
             }
             Text("OYNATIYOR", fontWeight = FontWeight.ExtraBold, fontSize = 11.sp, color = Color.Gray, letterSpacing = 1.sp)
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.MoreVert, contentDescription = null, tint = Color.White)
+            var menuExpanded by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = null, tint = Color.White)
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                    modifier = Modifier.background(Color(0xFF1E1E1E))
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("İzleme Listesine Ekle", color = Color.White) },
+                        onClick = {
+                            menuExpanded = false
+                            onAddToPlaylist(track)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Müziği Gizle", color = Color.White) },
+                        onClick = {
+                            menuExpanded = false
+                            onCollapse()
+                        }
+                    )
+                }
             }
         }
 

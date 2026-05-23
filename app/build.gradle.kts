@@ -1,3 +1,6 @@
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -63,6 +66,18 @@ android {
 secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
+}
+
+
+tasks.register("downloadLogo") {
+    doLast {
+        val u = URL("https://i.hizliresim.com/h5umo66.png")
+        val f = file("src/main/res/drawable/app_logo.png")
+        f.parentFile.mkdirs()
+        u.openStream().use { input ->
+            Files.copy(input, f.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
 }
 
 // Some unused dependencies are commented out below instead of being removed.
