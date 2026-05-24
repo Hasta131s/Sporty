@@ -48,7 +48,7 @@ fun AppNavigationWrapper(viewModel: MainViewModel) {
     AnimatedContent(
         targetState = currentScreen,
         transitionSpec = {
-            fadeIn(animationSpec = tween(300)) with fadeOut(animationSpec = tween(200))
+            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(200))
         },
         label = "screen_routing"
     ) { screen ->

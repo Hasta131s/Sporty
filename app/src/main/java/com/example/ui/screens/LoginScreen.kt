@@ -43,16 +43,14 @@ fun LoginScreen(viewModel: MainViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF040404)),
+            .background(Color(0xFF0A0A0A)),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth(0.85f)
                 .wrapContentHeight()
-                .clip(RoundedCornerShape(32.dp))
-                .background(Color(0xFF121212))
-                .padding(32.dp),
+                .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // App Logo Icon
@@ -60,11 +58,11 @@ fun LoginScreen(viewModel: MainViewModel) {
                 painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = "App Logo",
                 modifier = Modifier
-                    .size(120.dp)
+                    .size(96.dp)
                     .clip(RoundedCornerShape(24.dp))
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
             // Animated Header Title (Giriş Yap vs Kayıt Ol)
             AnimatedContent(
@@ -105,7 +103,8 @@ fun LoginScreen(viewModel: MainViewModel) {
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
                     unfocusedLabelColor = Color.Gray,
                     focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E)
+                    unfocusedContainerColor = Color(0xFF1E1E1E),
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 
@@ -141,7 +140,8 @@ fun LoginScreen(viewModel: MainViewModel) {
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
                     unfocusedLabelColor = Color.Gray,
                     focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E)
+                    unfocusedContainerColor = Color(0xFF1E1E1E),
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 
@@ -190,17 +190,16 @@ fun LoginScreen(viewModel: MainViewModel) {
                         }
                     }
                 },
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(52.dp)
                     .testTag("submit_button")
             ) {
                 Text(
-                    text = if (isRegisterState) "Kayıt Ol" else "Giriş Yap",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.Black
+                    text = if (isRegisterState) "Hesap Oluştur" else "Giriş Yap",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 )
             }
 

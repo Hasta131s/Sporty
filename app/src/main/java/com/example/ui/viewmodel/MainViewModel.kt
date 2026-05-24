@@ -112,6 +112,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var activeDownloadName by mutableStateOf("")
 
     private var progressTrackerJob: Job? = null
+    private var playerInitJob: Job? = null
     private val CHANNEL_ID = "music_channel"
 
     private val mediaControlReceiver = object : android.content.BroadcastReceiver() {
@@ -688,7 +689,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         trackCurrentPositionText = "0:00"
         trackDurationText = "0:00"
 
-        viewModelScope.launch(Dispatchers.IO) {
+        playerInitJob?.cancel()
+        playerInitJob = viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
             val player = MediaPlayer().apply {
                 setOnPreparedListener { mp ->
@@ -757,7 +759,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 player.pause()
                 isTrackPlaying = false
                 stopProgressTracker()
-                currentTrack?.let { showNotification(it, false) }
+                val notificationManager = getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                notificationManager.cancel(1)
             } else {
                 player.start()
                 isTrackPlaying = true
@@ -849,7 +852,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun stopPlayback() {
+        playerInitJob?.cancel()
+        playerInitJob = null
         stopProgressTracker()
+        
+        val notificationManager = getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        notificationManager.cancel(1)
+        
         mediaPlayer?.apply {
             if (isPlaying) stop()
             release()

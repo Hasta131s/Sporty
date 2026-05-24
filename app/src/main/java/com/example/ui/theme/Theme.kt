@@ -20,7 +20,7 @@ fun MyApplicationTheme(
     }
 
     val customDarkColorScheme = darkColorScheme(
-        primary = SpotifyGreen,
+        primary = accentColor,
         secondary = SurfaceVariantDark,
         background = DarkBackground,
         surface = SurfaceDark,
