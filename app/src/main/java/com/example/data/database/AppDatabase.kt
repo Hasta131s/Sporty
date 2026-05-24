@@ -1,130 +1,120 @@
 package com.example.data.database
 
-import android.content.Context
-import androidx.room.Database
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
+    @Query("SELECT * FROM users LIMIT 1")
+    fun getUserFlow(): Flow<User?>
+
+    @Query("SELECT * FROM users LIMIT 1")
+    suspend fun getUser(): User?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: User)
 
-    @Query("SELECT * FROM users WHERE id = :id LIMIT 1")
-    suspend fun getUserById(id: String): User?
+    @Update
+    suspend fun updateUser(user: User)
 
-    @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
-    suspend fun getUserByUsername(username: String): User?
-
-    @Query("SELECT * FROM users ORDER BY createdAt DESC")
-    fun getAllUsers(): Flow<List<User>>
-
-    @Query("UPDATE users SET isBanned = :isBanned WHERE id = :userId")
-    suspend fun updateBannedStatus(userId: String, isBanned: Boolean)
+    @Query("DELETE FROM users")
+    suspend fun clearUser()
 }
 
 @Dao
 interface PlaylistDao {
+    @Query("SELECT * FROM playlists ORDER BY createdAt DESC")
+    fun getAllPlaylistsFlow(): Flow<List<Playlist>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylist(playlist: Playlist)
 
     @Query("DELETE FROM playlists WHERE id = :id")
-    suspend fun deletePlaylistById(id: String)
+    suspend fun deletePlaylist(id: Int)
 
-    @Query("SELECT * FROM playlists WHERE userId = :userId ORDER BY createdAt DESC")
-    fun getPlaylistsByUserId(userId: String): Flow<List<Playlist>>
-
-    @Query("SELECT * FROM playlists WHERE id = :id LIMIT 1")
-    suspend fun getPlaylistById(id: String): Playlist?
+    @Update
+    suspend fun updatePlaylist(playlist: Playlist)
 }
 
 @Dao
 interface FavoriteDao {
+    @Query("SELECT * FROM favorites ORDER BY addedAt DESC")
+    fun getAllFavoritesFlow(): Flow<List<Favorite>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFavorite(favorite: Favorite)
 
     @Query("DELETE FROM favorites WHERE id = :id")
     suspend fun deleteFavorite(id: String)
 
-    @Query("DELETE FROM favorites WHERE songId = :songId AND userId = :userId")
-    suspend fun deleteFavoriteBySongAndUser(songId: String, userId: String)
+    @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE id = :id)")
+    fun isFavoriteFlow(id: String): Flow<Boolean>
 
-    @Query("SELECT * FROM favorites WHERE userId = :userId ORDER BY addedAt DESC")
-    fun getFavoritesByUserId(userId: String): Flow<List<Favorite>>
+    @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE id = :id)")
+    suspend fun isFavorite(id: String): Boolean
 }
 
 @Dao
 interface DownloadDao {
+    @Query("SELECT * FROM downloads ORDER BY downloadedAt DESC")
+    fun getAllDownloadsFlow(): Flow<List<Download>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDownload(download: Download)
 
     @Query("DELETE FROM downloads WHERE id = :id")
-    suspend fun deleteDownloadById(id: String)
+    suspend fun deleteDownload(id: String)
 
-    @Query("SELECT * FROM downloads WHERE userId = :userId ORDER BY downloadedAt DESC")
-    fun getDownloadsByUserId(userId: String): Flow<List<Download>>
+    @Query("SELECT EXISTS(SELECT 1 FROM downloads WHERE id = :id)")
+    fun isDownloadedFlow(id: String): Flow<Boolean>
 
-    @Query("SELECT * FROM downloads ORDER BY downloadedAt DESC")
-    fun getAllDownloads(): Flow<List<Download>>
-
-    @Query("SELECT * FROM downloads WHERE videoId = :videoId LIMIT 1")
-    suspend fun getDownloadByVideoId(videoId: String): Download?
+    @Query("SELECT * FROM downloads WHERE id = :id")
+    suspend fun getDownload(id: String): Download?
 }
 
 @Dao
 interface SearchHistoryDao {
+    @Query("SELECT * FROM search_history ORDER BY timestamp DESC LIMIT 20")
+    fun getSearchHistoryFlow(): Flow<List<SearchHistory>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSearchHistory(searchHistory: SearchHistory)
+    suspend fun insertSearch(search: SearchHistory)
 
-    @Query("DELETE FROM search_history WHERE userId = :userId")
-    suspend fun clearHistoryByUserId(userId: String)
-
-    @Query("SELECT * FROM search_history WHERE userId = :userId ORDER BY timestamp DESC LIMIT 50")
-    fun getSearchHistoryByUserId(userId: String): Flow<List<SearchHistory>>
-
-    @Query("SELECT * FROM search_history ORDER BY timestamp DESC")
-    fun getAllSearchHistory(): Flow<List<SearchHistory>>
+    @Query("DELETE FROM search_history")
+    suspend fun clearHistory()
 }
 
 @Dao
 interface BannerDao {
+    @Query("SELECT * FROM banners")
+    fun getBannersFlow(): Flow<List<Banner>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBanner(banner: Banner)
 
     @Query("DELETE FROM banners WHERE id = :id")
-    suspend fun deleteBannerById(id: String)
+    suspend fun deleteBanner(id: Int)
 
-    @Query("SELECT * FROM banners WHERE active = 1 ORDER BY createdAt DESC")
-    fun getActiveBanners(): Flow<List<Banner>>
-
-    @Query("SELECT * FROM banners ORDER BY createdAt DESC")
-    fun getAllBanners(): Flow<List<Banner>>
-
-    @Query("UPDATE banners SET active = :active WHERE id = :id")
-    suspend fun updateBannerActive(id: String, active: Boolean)
+    @Query("DELETE FROM banners")
+    suspend fun clearBanners()
 }
 
 @Dao
 interface LyricsCacheDao {
+    @Query("SELECT * FROM lyrics_cache WHERE songId = :songId")
+    suspend fun getLyrics(songId: String): LyricsCache?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLyrics(lyrics: LyricsCache)
-
-    @Query("SELECT * FROM lyrics_cache WHERE id = :id LIMIT 1")
-    suspend fun getLyricsById(id: String): LyricsCache?
 }
 
 @Dao
 interface SiteSettingsDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSettings(settings: SiteSettings)
+    @Query("SELECT * FROM site_settings WHERE `key` = :key")
+    suspend fun getSetting(key: String): SiteSettings?
 
-    @Query("SELECT * FROM site_settings WHERE id = 1 LIMIT 1")
-    suspend fun getSettings(): SiteSettings?
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSetting(setting: SiteSettings)
 }
 
 @Database(
@@ -155,12 +145,12 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context): AppDatabase {
+        fun getDatabase(context: android.content.Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "streamhub_database"
+                    "flofys_database"
                 )
                 .fallbackToDestructiveMigration()
                 .build()

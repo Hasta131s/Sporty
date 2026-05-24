@@ -1,24 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="200dp"
-    android:height="200dp"
-    android:viewportWidth="200"
-    android:viewportHeight="200">
-
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
     <path
-        android:fillColor="#F4F4F4"
-        android:pathData="M0,0h200v200h-200z" />
-    
-    <!-- Simplified artistic text 'flofys' using vector paths -->
-    <path
-        android:fillColor="#2CA449"
-        android:pathData="M 68,96 L 68,90 C 68,80 82,78 88,86 L 82,90 C 78,86 74,86 74,90 L 74,96 L 86,96 L 86,102 L 74,102 L 74,130 L 68,130 L 68,102 L 60,102 L 60,96 Z" />
-        
-    <path
-        android:fillColor="#2CA449"
-        android:pathData="M 94,80 L 100,80 L 100,130 L 94,130 Z" />
-        
-    <path
-        android:fillColor="#2CA449"
-        android:pathData="M 124,108 C 124,94 106,94 106,108 C 106,122 124,122 124,108 Z M 118,108 C 118,116 112,116 112,108 C 112,100 118,100 118,108 Z" />
+        android:fillColor="#FF9F2BFF"
+        android:pathData="M12,3v10.55C11.58,13.21 10.84,13 10,13c-2.21,0 -4,1.79 -4,4s1.79,4 4,4 4,-1.79 4,-4V7h4V3h-6z" />
 </vector>

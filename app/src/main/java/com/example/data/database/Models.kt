@@ -10,96 +10,75 @@ data class Song(
     val title: String,
     val artist: String,
     val thumbnail: String,
-    val duration: String = "",
-    val source: String = "youtube",
-    val filename: String? = null
+    val duration: String,
+    val source: String = "youtube"
 )
 
 @Entity(tableName = "users")
 data class User(
-    @PrimaryKey val id: String,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val username: String,
-    val passwordHash: String,
-    val avatarUrl: String,
-    val createdAt: String,
-    val isBanned: Boolean = false,
-    val isAdmin: Boolean = false
+    val email: String,
+    val profilePicUrl: String = "",
+    val isPremium: Boolean = false,
+    val themePreference: String = "dark"
 )
 
 @Entity(tableName = "playlists")
 data class Playlist(
-    @PrimaryKey val id: String,
-    val userId: String,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
-    val songsJson: String, // Stringified list of Song
-    val createdAt: String,
-    val coverUrl: String
+    val songIdsJson: String = "[]", // Stores list of song IDs
+    val createdAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "favorites")
 data class Favorite(
-    @PrimaryKey val id: String, // songId + "_" + userId to be unique
-    val songId: String,
-    val userId: String,
+    @PrimaryKey val id: String,
     val title: String,
     val artist: String,
     val thumbnail: String,
     val duration: String,
     val source: String,
-    val filename: String? = null,
-    val addedAt: String
+    val addedAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "downloads")
 data class Download(
     @PrimaryKey val id: String,
-    val userId: String,
-    val videoId: String,
     val title: String,
     val artist: String,
     val thumbnail: String,
-    val filename: String,
-    val filepath: String,
-    val downloadedAt: String,
-    val size: Long,
-    val shared: Boolean = true
+    val duration: String,
+    val source: String,
+    val localFilePath: String,
+    val downloadedAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "search_history")
 data class SearchHistory(
-    @PrimaryKey val id: String,
-    val userId: String,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val query: String,
-    val timestamp: String
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "banners")
 data class Banner(
-    @PrimaryKey val id: String,
-    val title: String,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val imageUrl: String,
-    val link: String,
-    val active: Boolean,
-    val createdAt: String
+    val title: String,
+    val actionUrl: String = ""
 )
 
 @Entity(tableName = "lyrics_cache")
 data class LyricsCache(
-    @PrimaryKey val id: String, // md5 of query
-    val query: String,
-    val fullTitle: String,
-    val artUrl: String,
+    @PrimaryKey val songId: String,
     val lyrics: String,
-    val bio: String,
-    val cachedAt: String
+    val cachedAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "site_settings")
 data class SiteSettings(
-    @PrimaryKey val id: Int = 1,
-    val siteName: String,
-    val logoUrl: String,
-    val adminPasswordHash: String,
-    val enableBanners: Boolean = true,
-    val maxFileSizeMB: Int = 100
+    @PrimaryKey val key: String,
+    val value: String
 )

@@ -1,288 +1,139 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import com.example.R
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.viewmodel.MainViewModel
+import com.example.R
+import com.example.ui.theme.CosmicSlate
+import com.example.ui.theme.CardSlate
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(viewModel: MainViewModel) {
-    var isRegisterState by remember { mutableStateOf(false) }
+fun LoginScreen(
+    onLoginSuccess: (String, String) -> Unit
+) {
     var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
-    var successMessage by remember { mutableStateOf("") }
-
-    val focusManager = LocalFocusManager.current
+    var email by remember { mutableStateOf("") }
+    var showError by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF131A15), // Very dark hints of company green
-                        Color(0xFF070707),
-                        Color(0xFF030303)
-                    )
-                )
-            ),
+            .background(CosmicSlate)
+            .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .wrapContentHeight()
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(CardSlate)
+                .padding(28.dp)
         ) {
-            // Premium glassmorphic border surrounding the logo
-            Box(
+            // Reconstructed App Header Brand
+            Icon(
+                painter = painterResource(id = R.drawable.app_logo),
+                contentDescription = "Flofys Logo",
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(Color.White.copy(alpha = 0.03f))
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(28.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.app_logo),
-                    contentDescription = "App Logo",
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Brand title and professional slogan
-            Text(
-                text = "flofys",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp,
-                    fontFamily = FontFamily.SansSerif
-                ),
-                color = Color.White
+                    .size(80.dp)
+                    .padding(bottom = 12.dp)
             )
-            
+
             Text(
-                text = "Kurumsal Müzik ve Sanat Platformu",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    letterSpacing = 0.5.sp,
-                    fontWeight = FontWeight.Light
-                ),
+                text = "Flofys Premium",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "Discover acoustic cosmos, cache tracks seamlessly.",
+                fontSize = 12.sp,
                 color = Color.Gray,
-                modifier = Modifier.padding(top = 4.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Animated Header Title (Giriş Yap vs Hesap Oluştur)
-            AnimatedContent(
-                targetState = isRegisterState,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                },
-                label = "auth_header"
-            ) { isReg ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = if (isReg) "Hemen Hesap Oluşturun" else "Hesabınıza Giriş Yapın",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        ),
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = if (isReg) "Aramıza katılmak için formu doldurun" else "Devam etmek için kurumsal kimliğinizi girin",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(top = 4.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Inputs fields
             OutlinedTextField(
                 value = username,
-                onValueChange = {
-                    username = it
-                    errorMessage = ""
-                },
-                label = { Text("Kullanıcı Adı") },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color.LightGray) },
+                onValueChange = { username = it; showError = false },
+                label = { Text("Username") },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(bottom = 12.dp)
                     .testTag("username_input"),
-                colors = OutlinedTextFieldDefaults.colors(
+                colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    unfocusedBorderColor = Color.DarkGray,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.Gray,
-                    focusedContainerColor = Color(0xFF141414),
-                    unfocusedContainerColor = Color(0xFF111111),
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    unfocusedLabelColor = Color.LightGray
                 )
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = password,
-                onValueChange = {
-                    password = it
-                    errorMessage = ""
-                },
-                label = { Text("Şifre") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.LightGray) },
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Şifreyi gizle" else "Şifreyi göster",
-                            tint = if (passwordVisible) MaterialTheme.colorScheme.primary else Color.Gray
-                        )
-                    }
-                },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                value = email,
+                onValueChange = { email = it; showError = false },
+                label = { Text("Email (Use 'admin' to toggle panels)") },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("password_input"),
-                colors = OutlinedTextFieldDefaults.colors(
+                    .padding(bottom = 16.dp)
+                    .testTag("email_input"),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    unfocusedBorderColor = Color.DarkGray,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.Gray,
-                    focusedContainerColor = Color(0xFF141414),
-                    unfocusedContainerColor = Color(0xFF111111),
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    unfocusedLabelColor = Color.LightGray
                 )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Error Display
-            if (errorMessage.isNotEmpty()) {
+            if (showError) {
                 Text(
-                    text = errorMessage,
+                    text = "Please enter valid fields.",
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    textAlign = TextAlign.Center
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
             }
 
-            if (successMessage.isNotEmpty()) {
-                Text(
-                    text = successMessage,
-                    color = Color(0xFF4CAF50),
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // Submit Button
             Button(
                 onClick = {
-                    focusManager.clearFocus()
-                    if (isRegisterState) {
-                        viewModel.register(username, password) { success, msg ->
-                            if (success) {
-                                successMessage = msg
-                            } else {
-                                errorMessage = msg
-                            }
-                        }
+                    if (username.trim().isNotEmpty() && email.trim().isNotEmpty()) {
+                        onLoginSuccess(username.trim(), email.trim())
                     } else {
-                        viewModel.login(username, password) { success, msg ->
-                            if (success) {
-                                successMessage = msg
-                            } else {
-                                errorMessage = msg
-                            }
-                        }
+                        showError = true
                     }
                 },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.Black
-                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .testTag("submit_button")
-            ) {
-                Text(
-                    text = if (isRegisterState) "HESAP OLUŞTUR" else "GİRİŞ YAP",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp
-                    ),
-                    color = Color.Black
+                    .testTag("submit_button"),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Text toggle between register / login state
-            TextButton(
-                onClick = {
-                    isRegisterState = !isRegisterState
-                    errorMessage = ""
-                    successMessage = ""
-                },
-                modifier = Modifier.testTag("toggle_auth_mode")
             ) {
                 Text(
-                    text = if (isRegisterState) "Zaten bir hesabınız var mı? Giriş Yapın" else "Henüz üyeliğiniz yok mu? Ücretsiz Kayıt Olun",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                    textAlign = TextAlign.Center
+                    text = "Enter Cosmos",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
                 )
             }
         }

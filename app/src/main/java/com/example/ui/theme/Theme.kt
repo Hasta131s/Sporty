@@ -4,37 +4,32 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.example.ui.viewmodel.AppColorTheme
+
+val CosmicSlate = Color(0xFF0F0E17)
+val CardSlate = Color(0xFF1D1B26)
+val PrimaryNeonViolet = Color(0xFF9F2BFF)
+val SecondaryNeonBlue = Color(0xFF00E5FF)
+val ActivePink = Color(0xFFFF007F)
+val TypographyWhite = Color(0xFFFFFFFE)
+val SubtitleWhite = Color(0xFFA7A9BE)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryNeonViolet,
+    secondary = SecondaryNeonBlue,
+    tertiary = ActivePink,
+    background = CosmicSlate,
+    surface = CardSlate,
+    onPrimary = Color.White,
+    onSecondary = Color.Black,
+    onTertiary = Color.White,
+    onBackground = TypographyWhite,
+    onSurface = TypographyWhite
+)
 
 @Composable
-fun MyApplicationTheme(
-    theme: AppColorTheme = AppColorTheme.SPOTIFY_GREEN,
-    content: @Composable () -> Unit,
-) {
-    val accentColor = when (theme) {
-        AppColorTheme.SPOTIFY_GREEN -> Color(0xFF1DB954)
-        AppColorTheme.COSMIC_INDIGO -> Color(0xFF673AB7)
-        AppColorTheme.CYBERPUNK_AMBER -> Color(0xFFFFB300)
-        AppColorTheme.NEON_PINK -> Color(0xFFE91E63)
-        AppColorTheme.CRIMSON_RED -> Color(0xFFD50000)
-    }
-
-    val customDarkColorScheme = darkColorScheme(
-        primary = accentColor,
-        secondary = SurfaceVariantDark,
-        background = DarkBackground,
-        surface = SurfaceDark,
-        onPrimary = White,
-        onSecondary = White,
-        onBackground = White,
-        onSurface = White,
-        surfaceVariant = SurfaceVariantDark,
-        onSurfaceVariant = TextGray
-    )
-
+fun FlofysTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = customDarkColorScheme,
-        typography = Typography,
+        colorScheme = DarkColorScheme,
         content = content
     )
 }

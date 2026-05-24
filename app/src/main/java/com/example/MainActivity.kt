@@ -1,114 +1,73 @@
 package com.example
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ui.screens.AdminScreen
-import com.example.ui.screens.DashboardScreen
-import com.example.ui.screens.LoginScreen
-import com.example.ui.theme.MyApplicationTheme
-import com.example.ui.viewmodel.MainViewModel
-import com.example.ui.viewmodel.Screen
-
+import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.example.ui.screens.DashboardScreen
+import com.example.ui.screens.LoginScreen
+import com.example.ui.theme.FlofysTheme
+import com.example.ui.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
-        }
+
+        // Request permissions for background playing and offline downloads notifications
+        checkAndRequestPermissions()
+
         setContent {
-            val viewModel: MainViewModel = viewModel()
-            val activeTheme = viewModel.activeTheme
+            FlofysTheme {
+                val user by viewModel.currentUser.collectAsState()
 
-            MyApplicationTheme(theme = activeTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    val backgroundUrl by viewModel.backgroundYoutubeEmbedUrl.collectAsState()
-                    
-                    backgroundUrl?.let { url ->
-                        AndroidView(
-                            factory = { context ->
-                                android.webkit.WebView(context).apply {
-                                    settings.javaScriptEnabled = true
-                                    settings.mediaPlaybackRequiresUserGesture = false
-                                    webViewClient = android.webkit.WebViewClient()
-                                    loadUrl(url)
-                                }
-                            },
-                            update = { view ->
-                                if (view.url != url) {
-                                    view.loadUrl(url)
-                                }
-                            },
-                            modifier = Modifier.size(1.dp).alpha(0.01f)
-                        )
-                    }
-
-                    AppNavigationWrapper(viewModel = viewModel)
+                if (user == null) {
+                    LoginScreen(
+                        onLoginSuccess = { username, email ->
+                            viewModel.loginOrRegister(username, email)
+                            Toast.makeText(this, "Welcome to Flofys Cosmos!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                } else {
+                    DashboardScreen(
+                        viewModel = viewModel,
+                        onLogoutRequested = {
+                            viewModel.logout()
+                            Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 }
             }
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        moveTaskToBack(true)
-    }
+    private fun checkAndRequestPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
 
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun AppNavigationWrapper(viewModel: MainViewModel) {
-    val currentScreen = viewModel.currentScreen
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }
 
-    AnimatedContent(
-        targetState = currentScreen,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(200))
-        },
-        label = "screen_routing"
-    ) { screen ->
-        when (screen) {
-            is Screen.Login, is Screen.Register -> {
-                LoginScreen(viewModel = viewModel)
-            }
-            is Screen.Dashboard -> {
-                DashboardScreen(
-                    viewModel = viewModel,
-                    onOpenAdmin = {
-                         viewModel.navigateTo(Screen.Admin)
-                    }
-                )
-            }
-            is Screen.Admin -> {
-                AdminScreen(
-                    viewModel = viewModel,
-                    onBack = {
-                         viewModel.navigateTo(Screen.Dashboard)
-                    }
-                )
-            }
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), 101)
         }
     }
 }
