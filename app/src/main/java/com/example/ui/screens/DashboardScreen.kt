@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -321,14 +322,14 @@ fun TopHeaderSection(
                 Image(
                     painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.app_logo),
                     contentDescription = "Logo",
-                    modifier = Modifier.size(38.dp).clip(RoundedCornerShape(8.dp))
+                    modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp))
                 )
             } else {
                 AsyncImage(
                     model = logoUrl,
                     contentDescription = "Logo",
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(56.dp)
                         .clip(RoundedCornerShape(8.dp))
                 )
             }
@@ -1264,20 +1265,14 @@ fun ProfileCustomizeScreen(viewModel: MainViewModel) {
         // Real-Time Theme Accent selection
         item {
             Text(
-                text = "Uygulama Teması (Accent Color)",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                text = "Görünüm Tema Rengi",
+                style = MaterialTheme.typography.titleMedium,
                 color = Color.White,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF121212))
-                    .padding(14.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 AppColorTheme.values().take(3).forEach { configTheme ->
                     val isSelected = viewModel.activeTheme == configTheme
@@ -1288,37 +1283,46 @@ fun ProfileCustomizeScreen(viewModel: MainViewModel) {
                         else -> Color(0xFF1DB954)
                     }
 
-                    Row(
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSelected) Color.White.copy(alpha = 0.05f) else Color.Transparent)
-                            .clickable { viewModel.changeAppTheme(configTheme) }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
-                                    .background(accentColor)
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) Color(0xFF1E1E1E) else Color(0xFF121212))
+                            .border(
+                                width = if (isSelected) 2.dp else 0.dp,
+                                color = if (isSelected) accentColor else Color.Transparent,
+                                shape = RoundedCornerShape(16.dp)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(configTheme.displayName, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            .clickable { viewModel.changeAppTheme(configTheme) }
+                            .padding(vertical = 16.dp, horizontal = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(accentColor),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = "Selected", tint = Color.Black, modifier = Modifier.size(20.dp))
+                            }
                         }
-
-                        if (isSelected) {
-                            Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = configTheme.displayName,
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelMedium,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
+            }
                 
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Tema Ön İzleme", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                // Beautiful preview
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Tema Ön İzleme", color = Color.Gray, style = MaterialTheme.typography.labelLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            // Beautiful preview
                 Box(
                     modifier = Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF222222)).padding(16.dp)
                 ) {
@@ -1344,7 +1348,6 @@ fun ProfileCustomizeScreen(viewModel: MainViewModel) {
                         }
                     }
                 }
-            }
         }
 
         // Sign Out key
@@ -1530,7 +1533,7 @@ fun FullPlayerOverlay(
             }
         }
 
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.weight(1f))
 
         // Large graphics cover
         AsyncImage(
@@ -1543,7 +1546,7 @@ fun FullPlayerOverlay(
             contentScale = ContentScale.Crop
         )
 
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Title Row
         Row(
@@ -1552,8 +1555,8 @@ fun FullPlayerOverlay(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(track.title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(track.artist, fontSize = 14.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(track.title, style = MaterialTheme.typography.headlineMedium, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(track.artist, style = MaterialTheme.typography.titleMedium, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1597,7 +1600,7 @@ fun FullPlayerOverlay(
             Text(durationText, color = Color.Gray, fontSize = 11.sp)
         }
 
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Control Keys
         Row(
@@ -1605,12 +1608,12 @@ fun FullPlayerOverlay(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Shuffle switch (placeholder for visual)
-            IconButton(onClick = { /* TODO Shuffle */ }) {
+            // Restart current track
+            IconButton(onClick = { onSeek(0f) }) {
                 Icon(
-                    imageVector = Icons.Default.Shuffle,
-                    contentDescription = "Shuffle",
-                    tint = Color.White.copy(alpha = 0.5f)
+                    imageVector = Icons.Default.Replay,
+                    contentDescription = "Restart",
+                    tint = Color.White.copy(alpha = 0.8f)
                 )
             }
 
@@ -1653,7 +1656,7 @@ fun FullPlayerOverlay(
             }
         }
 
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Expandable bottom lyrics sheet toggle
         Card(

@@ -43,22 +43,15 @@ fun LoginScreen(viewModel: MainViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        Color(0xFF040404)
-                    )
-                )
-            ),
+            .background(Color(0xFF040404)),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .fillMaxWidth(0.9f)
                 .wrapContentHeight()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF121212).copy(alpha = 0.9f))
+                .clip(RoundedCornerShape(32.dp))
+                .background(Color(0xFF121212))
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -67,31 +60,30 @@ fun LoginScreen(viewModel: MainViewModel) {
                 painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = "App Logo",
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(24.dp))
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Animated Header Title (Giriş Yap vs Kayıt Ol)
             AnimatedContent(
                 targetState = isRegisterState,
                 transitionSpec = {
-                    fadeIn() + slideInHorizontally() with fadeOut() + slideOutHorizontally()
+                    fadeIn() + slideInHorizontally() togetherWith fadeOut() + slideOutHorizontally()
                 },
                 label = "auth_header"
             ) { isReg ->
                 Text(
                     text = if (isReg) "Kayıt Ol" else "Giriş Yap",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = Color.White,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Inputs fields
             OutlinedTextField(
@@ -103,19 +95,21 @@ fun LoginScreen(viewModel: MainViewModel) {
                 label = { Text("Kullanıcı Adı") },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray) },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("username_input"),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                    unfocusedBorderColor = Color.Transparent,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.Gray
+                    unfocusedLabelColor = Color.Gray,
+                    focusedContainerColor = Color(0xFF1E1E1E),
+                    unfocusedContainerColor = Color(0xFF1E1E1E)
                 )
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = password,
@@ -137,28 +131,29 @@ fun LoginScreen(viewModel: MainViewModel) {
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("password_input"),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                    unfocusedBorderColor = Color.Transparent,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = Color.Gray
+                    unfocusedLabelColor = Color.Gray,
+                    focusedContainerColor = Color(0xFF1E1E1E),
+                    unfocusedContainerColor = Color(0xFF1E1E1E)
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Error Display
             if (errorMessage.isNotEmpty()) {
                 Text(
                     text = errorMessage,
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(bottom = 12.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(bottom = 16.dp),
                     textAlign = TextAlign.Center
                 )
             }
@@ -167,9 +162,8 @@ fun LoginScreen(viewModel: MainViewModel) {
                 Text(
                     text = successMessage,
                     color = Color(0xFF4CAF50),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(bottom = 12.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(bottom = 16.dp),
                     textAlign = TextAlign.Center
                 )
             }
@@ -196,22 +190,21 @@ fun LoginScreen(viewModel: MainViewModel) {
                         }
                     }
                 },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(56.dp)
                     .testTag("submit_button")
             ) {
                 Text(
                     text = if (isRegisterState) "Kayıt Ol" else "Giriş Yap",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
                     color = Color.Black
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Text toggle between register / login state
             TextButton(
@@ -225,8 +218,7 @@ fun LoginScreen(viewModel: MainViewModel) {
                 Text(
                     text = if (isRegisterState) "Zaten bir hesabınız var mı? Giriş Yapın" else "Henüz kayıt olmadınız mı? Ücretsiz Kayıt Olun",
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center
                 )
             }
