@@ -1485,6 +1485,7 @@ fun MiniPlayer(
 }
 
 // --- Player drawer Full Player layout ---
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FullPlayerOverlay(
     track: Song,
@@ -1558,7 +1559,7 @@ fun FullPlayerOverlay(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(0.5f))
 
         // Large graphics cover
         AsyncImage(
@@ -1571,7 +1572,7 @@ fun FullPlayerOverlay(
             contentScale = ContentScale.Crop
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.weight(0.5f))
 
         // Title Row
         Row(
@@ -1603,7 +1604,7 @@ fun FullPlayerOverlay(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Progress bar seek
         Slider(
@@ -1614,6 +1615,14 @@ fun FullPlayerOverlay(
                 activeTrackColor = Color.White,
                 inactiveTrackColor = Color.White.copy(alpha = 0.2f)
             ),
+            thumb = {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                )
+            },
             modifier = Modifier.fillMaxWidth(0.9f)
         )
 
@@ -1625,7 +1634,7 @@ fun FullPlayerOverlay(
             Text(durationText, color = Color.Gray, fontSize = 11.sp)
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.weight(0.5f))
 
         // Control Keys
         Row(
@@ -1681,7 +1690,7 @@ fun FullPlayerOverlay(
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.weight(0.5f))
 
         // Expandable bottom lyrics sheet toggle
         Card(
@@ -1689,7 +1698,7 @@ fun FullPlayerOverlay(
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.35f)
+                .weight(if (showPlayerLyrics) 1f else 0.15f)
                 .clickable {
                     showPlayerLyrics = !showPlayerLyrics
                     if (showPlayerLyrics && viewModel.lyricsResultText.isEmpty()) {
@@ -1697,7 +1706,7 @@ fun FullPlayerOverlay(
                     }
                 }
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1718,12 +1727,12 @@ fun FullPlayerOverlay(
                         Text(
                             text = viewModel.lyricsResultText,
                             color = Color.White,
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp,
-                            modifier = Modifier.verticalScroll(rememberScrollState())
+                            fontSize = 14.sp,
+                            lineHeight = 22.sp,
+                            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
                         )
                     } else {
-                        Text("Sözler yükleniyor veya bulunamadı...", color = Color.Gray, fontSize = 12.sp)
+                        Text("Sözler yükleniyor veya bulunamadı...", color = Color.Gray, fontSize = 14.sp)
                     }
                 } else {
                     Text("Detayları ve şarkı sözlerini görmek için dokunun...", color = Color.Gray, fontSize = 12.sp)
