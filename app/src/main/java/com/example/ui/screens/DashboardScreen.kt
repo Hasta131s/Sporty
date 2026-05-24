@@ -1273,49 +1273,54 @@ fun ProfileCustomizeScreen(viewModel: MainViewModel) {
                 modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
             )
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                AppColorTheme.values().take(3).forEach { configTheme ->
+                AppColorTheme.values().forEach { configTheme ->
                     val isSelected = viewModel.activeTheme == configTheme
                     val accentColor = when (configTheme) {
                         AppColorTheme.SPOTIFY_GREEN -> Color(0xFF1DB954)
                         AppColorTheme.COSMIC_INDIGO -> Color(0xFF673AB7)
                         AppColorTheme.CYBERPUNK_AMBER -> Color(0xFFFFB300)
-                        else -> Color(0xFF1DB954)
+                        AppColorTheme.NEON_PINK -> Color(0xFFE91E63)
+                        AppColorTheme.CRIMSON_RED -> Color(0xFFD50000)
                     }
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(16.dp))
+                            .width(115.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(if (isSelected) Color(0xFF1E1E1E) else Color(0xFF121212))
                             .border(
-                                width = if (isSelected) 2.dp else 0.dp,
-                                color = if (isSelected) accentColor else Color.Transparent,
-                                shape = RoundedCornerShape(16.dp)
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) accentColor else Color.White.copy(alpha = 0.05f),
+                                shape = RoundedCornerShape(14.dp)
                             )
                             .clickable { viewModel.changeAppTheme(configTheme) }
-                            .padding(vertical = 16.dp, horizontal = 4.dp)
+                            .padding(vertical = 14.dp, horizontal = 4.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(32.dp)
                                 .clip(CircleShape)
                                 .background(accentColor),
                             contentAlignment = Alignment.Center
                         ) {
                             if (isSelected) {
-                                Icon(Icons.Default.Check, contentDescription = "Selected", tint = Color.Black, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Check, contentDescription = "Selected", tint = Color.Black, modifier = Modifier.size(16.dp))
                             }
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = configTheme.displayName,
                             color = Color.White,
                             style = MaterialTheme.typography.labelMedium,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }

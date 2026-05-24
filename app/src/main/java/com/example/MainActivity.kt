@@ -38,6 +38,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            val notificationManager = getSystemService(android.app.NotificationManager::class.java)
+            notificationManager.cancel(1)
+        } catch (e: Exception) {}
+    }
 }
 
 @OptIn(ExperimentalAnimationApi::class)

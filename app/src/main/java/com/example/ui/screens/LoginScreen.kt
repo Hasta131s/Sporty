@@ -5,6 +5,7 @@ import androidx.compose.ui.res.painterResource
 import com.example.R
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -43,45 +45,96 @@ fun LoginScreen(viewModel: MainViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0A0A)),
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF131A15), // Very dark hints of company green
+                        Color(0xFF070707),
+                        Color(0xFF030303)
+                    )
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .fillMaxWidth(0.9f)
                 .wrapContentHeight()
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // App Logo Icon
-            Image(
-                painter = painterResource(id = R.drawable.app_logo),
-                contentDescription = "App Logo",
+            // Premium glassmorphic border surrounding the logo
+            Box(
                 modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(24.dp))
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Animated Header Title (Giriş Yap vs Kayıt Ol)
-            AnimatedContent(
-                targetState = isRegisterState,
-                transitionSpec = {
-                    fadeIn() + slideInHorizontally() togetherWith fadeOut() + slideOutHorizontally()
-                },
-                label = "auth_header"
-            ) { isReg ->
-                Text(
-                    text = if (isReg) "Kayıt Ol" else "Giriş Yap",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color.White,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color.White.copy(alpha = 0.03f))
+                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(28.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.app_logo),
+                    contentDescription = "App Logo",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(20.dp))
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Brand title and professional slogan
+            Text(
+                text = "flofys",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp,
+                    fontFamily = FontFamily.SansSerif
+                ),
+                color = Color.White
+            )
+            
+            Text(
+                text = "Kurumsal Müzik ve Sanat Platformu",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    letterSpacing = 0.5.sp,
+                    fontWeight = FontWeight.Light
+                ),
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Animated Header Title (Giriş Yap vs Hesap Oluştur)
+            AnimatedContent(
+                targetState = isRegisterState,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut()
+                },
+                label = "auth_header"
+            ) { isReg ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = if (isReg) "Hemen Hesap Oluşturun" else "Hesabınıza Giriş Yapın",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        ),
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = if (isReg) "Aramıza katılmak için formu doldurun" else "Devam etmek için kurumsal kimliğinizi girin",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Inputs fields
             OutlinedTextField(
@@ -91,20 +144,22 @@ fun LoginScreen(viewModel: MainViewModel) {
                     errorMessage = ""
                 },
                 label = { Text("Kullanıcı Adı") },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray) },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color.LightGray) },
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("username_input"),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
                     unfocusedLabelColor = Color.Gray,
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E),
-                    cursorColor = MaterialTheme.colorScheme.primary
+                    focusedContainerColor = Color(0xFF141414),
+                    unfocusedContainerColor = Color(0xFF111111),
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
                 )
             )
 
@@ -117,11 +172,11 @@ fun LoginScreen(viewModel: MainViewModel) {
                     errorMessage = ""
                 },
                 label = { Text("Şifre") },
-                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray) },
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.LightGray) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
-                            imageVector = Icons.Default.Lock,
+                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (passwordVisible) "Şifreyi gizle" else "Şifreyi göster",
                             tint = if (passwordVisible) MaterialTheme.colorScheme.primary else Color.Gray
                         )
@@ -130,18 +185,20 @@ fun LoginScreen(viewModel: MainViewModel) {
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("password_input"),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
                     unfocusedLabelColor = Color.Gray,
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E),
-                    cursorColor = MaterialTheme.colorScheme.primary
+                    focusedContainerColor = Color(0xFF141414),
+                    unfocusedContainerColor = Color(0xFF111111),
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
                 )
             )
 
@@ -152,7 +209,7 @@ fun LoginScreen(viewModel: MainViewModel) {
                 Text(
                     text = errorMessage,
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
                     modifier = Modifier.padding(bottom = 16.dp),
                     textAlign = TextAlign.Center
                 )
@@ -162,7 +219,7 @@ fun LoginScreen(viewModel: MainViewModel) {
                 Text(
                     text = successMessage,
                     color = Color(0xFF4CAF50),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
                     modifier = Modifier.padding(bottom = 16.dp),
                     textAlign = TextAlign.Center
                 )
@@ -191,15 +248,22 @@ fun LoginScreen(viewModel: MainViewModel) {
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.Black
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
                     .testTag("submit_button")
             ) {
                 Text(
-                    text = if (isRegisterState) "Hesap Oluştur" else "Giriş Yap",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    text = if (isRegisterState) "HESAP OLUŞTUR" else "GİRİŞ YAP",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
+                    ),
+                    color = Color.Black
                 )
             }
 
@@ -215,9 +279,9 @@ fun LoginScreen(viewModel: MainViewModel) {
                 modifier = Modifier.testTag("toggle_auth_mode")
             ) {
                 Text(
-                    text = if (isRegisterState) "Zaten bir hesabınız var mı? Giriş Yapın" else "Henüz kayıt olmadınız mı? Ücretsiz Kayıt Olun",
+                    text = if (isRegisterState) "Zaten bir hesabınız var mı? Giriş Yapın" else "Henüz üyeliğiniz yok mu? Ücretsiz Kayıt Olun",
                     color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                     textAlign = TextAlign.Center
                 )
             }

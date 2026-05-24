@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.isActive
 import java.io.File
 import java.net.URLEncoder
 import java.util.UUID
@@ -692,34 +693,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         playerInitJob?.cancel()
         playerInitJob = viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            val player = MediaPlayer().apply {
-                setOnPreparedListener { mp ->
-                    viewModelScope.launch(Dispatchers.Main) {
-                        isTrackBuffering = false
-                        isTrackPlaying = true
-                        showNotification(currentTrack!!, true)
-                        mp.start()
-                        trackDurationText = formatMillis(mp.duration)
-                        startProgressTracker()
-                    }
-                }
-                setOnCompletionListener {
-                    viewModelScope.launch(Dispatchers.Main) {
-                        handleTrackEnded()
-                    }
-                }
-                setOnErrorListener { _, _, _ ->
-                    viewModelScope.launch(Dispatchers.Main) {
-                        isTrackBuffering = false
-                        Log.e("MainViewModel", "MediaPlayer error. Skipping track.")
-                        next()
-                    }
-                    true
-                }
-            }
-            mediaPlayer = player
-
+            var player: MediaPlayer? = null
             try {
+                player = MediaPlayer().apply {
+                    setOnPreparedListener { mp ->
+                        viewModelScope.launch(Dispatchers.Main) {
+                            if (mediaPlayer == mp) {
+                                isTrackBuffering = false
+                                isTrackPlaying = true
+                                showNotification(song, true)
+                                mp.start()
+                                trackDurationText = formatMillis(mp.duration)
+                                startProgressTracker()
+                            } else {
+                                mp.release()
+                            }
+                        }
+                    }
+                    setOnCompletionListener { mp ->
+                        viewModelScope.launch(Dispatchers.Main) {
+                            if (mediaPlayer == mp) {
+                                handleTrackEnded()
+                            }
+                        }
+                    }
+                    setOnErrorListener { mp, _, _ ->
+                        viewModelScope.launch(Dispatchers.Main) {
+                            if (mediaPlayer == mp) {
+                                isTrackBuffering = false
+                                Log.e("MainViewModel", "MediaPlayer error. Skipping track.")
+                                next()
+                            }
+                        }
+                        true
+                    }
+                }
+
+                if (!isActive) {
+                    player.release()
+                    return@launch
+                }
+
                 // If offline track, play direct File Path
                 val localDownload = db.downloadDao().getDownloadByVideoId(song.id)
                 if (localDownload != null) {
@@ -728,19 +742,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         player.setDataSource(localFile.absolutePath)
                         currentTrack = song.copy(source = "download", filename = localFile.name)
                         player.prepareAsync()
+                        withContext(Dispatchers.Main) {
+                            mediaPlayer = player
+                        }
                         return@launch
                     }
                 }
 
                 // Play from Online URL
                 val downloadLink = MusicApiService.getDownloadLink(song.id)
-                if (!downloadLink.isNullOrEmpty()) {
+                if (!downloadLink.isNullOrEmpty() && isActive) {
                     player.setDataSource(downloadLink)
                     player.prepareAsync()
+                    withContext(Dispatchers.Main) {
+                        mediaPlayer = player
+                    }
                 } else {
                     withContext(Dispatchers.Main) {
                         isTrackBuffering = false
                         Log.e("MainViewModel", "Could not load online audio link.")
+                        if (isActive) {
+                            Toast.makeText(context, "Müzik bağlantısı yüklenemedi", Toast.LENGTH_SHORT).show()
+                            next()
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -748,19 +772,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     isTrackBuffering = false
                     Log.e("MainViewModel", "Exception loading DataSource to MediaPlayer", e)
                 }
+            } finally {
+                withContext(kotlinx.coroutines.NonCancellable) {
+                    if (mediaPlayer != player) {
+                        player?.release()
+                    }
+                }
             }
         }
     }
 
     fun togglePlay() {
-        val player = mediaPlayer ?: return
+        val player = mediaPlayer
+        if (player == null) {
+            currentTrack?.let { playTrack(it, currentQueue) }
+            return
+        }
         try {
             if (isTrackPlaying) {
                 player.pause()
                 isTrackPlaying = false
                 stopProgressTracker()
-                val notificationManager = getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-                notificationManager.cancel(1)
+                currentTrack?.let { showNotification(it, false) }
             } else {
                 player.start()
                 isTrackPlaying = true
