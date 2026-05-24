@@ -241,6 +241,100 @@ object MusicApiService {
     }
 
     // 3. YouTube Session Download API (RapidAPI parsed from PHP)
+    fun getFallbackDownloadLink(videoId: String): String? {
+        val instances = listOf(
+            "https://pipedapi.kavin.rocks",
+            "https://api.piped.yt",
+            "https://pipedapi.lvkno.in",
+            "https://pipedapi.tokhmi.xyz"
+        )
+        for (instance in instances) {
+            try {
+                val url = "$instance/streams/$videoId"
+                val request = Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .build()
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val body = response.body?.string()
+                        if (!body.isNullOrEmpty()) {
+                            val json = JSONObject(body)
+                            val audioStreams = json.optJSONArray("audioStreams")
+                            if (audioStreams != null && audioStreams.length() > 0) {
+                                // Try to find an mp4 audio stream or take the first one
+                                var bestUrl: String? = null
+                                for (i in 0 until audioStreams.length()) {
+                                    val stream = audioStreams.getJSONObject(i)
+                                    val streamUrl = stream.optString("url")
+                                    val mimeType = stream.optString("mimeType") ?: ""
+                                    if (mimeType.contains("audio/mp4")) {
+                                        bestUrl = streamUrl
+                                        break
+                                    }
+                                    if (bestUrl == null) {
+                                        bestUrl = streamUrl
+                                    }
+                                }
+                                if (!bestUrl.isNullOrEmpty()) {
+                                    Log.d("MusicApiService", "Found fallback Piped stream from $instance: $bestUrl")
+                                    return bestUrl
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MusicApiService", "Error calling Piped instance $instance", e)
+            }
+        }
+        return null
+    }
+
+    fun getYoutubeMediaDownloaderStream(videoId: String): String? {
+        val apiUrl = "https://youtube-media-downloader.p.rapidapi.com/v2/video/streams?videoId=$videoId"
+        val request = Request.Builder()
+            .url(apiUrl)
+            .header("x-rapidapi-key", "6448bb7ff1mshd973524f6873a42p14bfb8jsn800441a82f14")
+            .header("x-rapidapi-host", "youtube-media-downloader.p.rapidapi.com")
+            .build()
+        try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (!body.isNullOrEmpty()) {
+                        val json = JSONObject(body)
+                        val streams = json.optJSONArray("streams")
+                        if (streams != null && streams.length() > 0) {
+                            var bestUrl: String? = null
+                            for (i in 0 until streams.length()) {
+                                val stream = streams.getJSONObject(i)
+                                val streamUrl = stream.optString("url")
+                                val audioOnly = stream.optBoolean("audioOnly", false)
+                                val mimeType = stream.optString("mimeType", "")
+                                
+                                if (audioOnly || mimeType.contains("audio/")) {
+                                    bestUrl = streamUrl
+                                    break
+                                }
+                                if (bestUrl == null) {
+                                    bestUrl = streamUrl
+                                }
+                            }
+                            if (!bestUrl.isNullOrEmpty()) {
+                                Log.d("MusicApiService", "Found stream from youtube-media-downloader: $bestUrl")
+                                return bestUrl
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MusicApiService", "Error calling youtube-media-downloader", e)
+        }
+        return null
+    }
+
     fun getDownloadLink(videoId: String): String? {
         val apiUrl = "https://youtube-mp36.p.rapidapi.com/dl?id=$videoId"
         val request = Request.Builder()
@@ -252,15 +346,16 @@ object MusicApiService {
         try {
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    val body = response.body?.string() ?: return null
-                    Log.d("MusicApiService", "RapidAPI Response: $body")
-                    val json = JSONObject(body)
-                    // The API returns status "ok" and link in the root
-                    val status = json.optString("status")
-                    if (status == "ok" || status == "success" || json.has("link")) {
-                        val link = json.optString("link")
-                        if (!link.isNullOrEmpty()) {
-                            return link
+                    val body = response.body?.string()
+                    if (!body.isNullOrEmpty()) {
+                        val json = JSONObject(body)
+                        // The API returns status "ok" and link in the root
+                        val status = json.optString("status")
+                        if (status == "ok" || status == "success" || json.has("link")) {
+                            val link = json.optString("link")
+                            if (!link.isNullOrEmpty()) {
+                                return link
+                            }
                         }
                     }
                 } else {
@@ -268,9 +363,17 @@ object MusicApiService {
                 }
             }
         } catch (e: Exception) {
-            Log.e("MusicApiService", "Error calling RapidAPI youtube-mp36", e)
+            Log.e("MusicApiService", "Error calling RapidAPI youtube-mp36, trying fallback...", e)
         }
-        return null
+        
+        Log.d("MusicApiService", "Primary download link failed. Invoking youtube-media-downloader stream backup.")
+        val backupLink = getYoutubeMediaDownloaderStream(videoId)
+        if (!backupLink.isNullOrEmpty()) {
+            return backupLink
+        }
+        
+        Log.d("MusicApiService", "backupLink failed. Invoking Piped fallback service.")
+        return getFallbackDownloadLink(videoId)
     }
 
     // Download the MP3 file to local storage inside Context Files

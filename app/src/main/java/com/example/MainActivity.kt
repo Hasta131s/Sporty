@@ -18,6 +18,13 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.MainViewModel
 import com.example.ui.viewmodel.Screen
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.dp
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,18 +40,40 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    val backgroundUrl by viewModel.backgroundYoutubeEmbedUrl.collectAsState()
+                    
+                    backgroundUrl?.let { url ->
+                        AndroidView(
+                            factory = { context ->
+                                android.webkit.WebView(context).apply {
+                                    settings.javaScriptEnabled = true
+                                    settings.mediaPlaybackRequiresUserGesture = false
+                                    webViewClient = android.webkit.WebViewClient()
+                                    loadUrl(url)
+                                }
+                            },
+                            update = { view ->
+                                if (view.url != url) {
+                                    view.loadUrl(url)
+                                }
+                            },
+                            modifier = Modifier.size(1.dp).alpha(0.01f)
+                        )
+                    }
+
                     AppNavigationWrapper(viewModel = viewModel)
                 }
             }
         }
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        moveTaskToBack(true)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        try {
-            val notificationManager = getSystemService(android.app.NotificationManager::class.java)
-            notificationManager.cancel(1)
-        } catch (e: Exception) {}
     }
 }
 

@@ -97,6 +97,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var isLyricsLoading by mutableStateOf(false)
 
     // Music Playback engine state
+    val backgroundYoutubeEmbedUrl = MutableStateFlow<String?>(null)
     private var mediaPlayer: MediaPlayer? = null
     var currentTrack by mutableStateOf<Song?>(null)
     var currentQueue by mutableStateOf<List<Song>>(emptyList())
@@ -115,6 +116,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var progressTrackerJob: Job? = null
     private var playerInitJob: Job? = null
     private val CHANNEL_ID = "music_channel"
+    private var consecutiveLoadFailures = 0
 
     private val mediaControlReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -211,6 +213,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         setupSiteSettings()
         loadAllBanners()
         checkSavedSession()
+
+        // Start helper PlaybackService for task removal cleanup
+        try {
+            val context = getApplication<Application>()
+            context.startService(Intent(context, com.example.PlaybackService::class.java))
+        } catch (e: Exception) {}
     }
 
     private fun checkSavedSession() {
@@ -674,6 +682,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // --- Comprehensive MediaPlayer Music Control Engine ---
     fun playTrack(song: Song, queue: List<Song> = listOf(song)) {
         stopPlayback()
+        backgroundYoutubeEmbedUrl.value = null
         currentTrack = song
         currentQueue = queue
         queueIndex = queue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
@@ -701,6 +710,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             if (mediaPlayer == mp) {
                                 isTrackBuffering = false
                                 isTrackPlaying = true
+                                consecutiveLoadFailures = 0 // Reset on successful load
                                 showNotification(song, true)
                                 mp.start()
                                 trackDurationText = formatMillis(mp.duration)
@@ -721,8 +731,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         viewModelScope.launch(Dispatchers.Main) {
                             if (mediaPlayer == mp) {
                                 isTrackBuffering = false
-                                Log.e("MainViewModel", "MediaPlayer error. Skipping track.")
-                                next()
+                                Log.e("MainViewModel", "MediaPlayer error. Loading background YouTube embed fallback.")
+                                Toast.makeText(context, "Bağlantı hatası. YouTube yedek oynatıcı açılıyor...", Toast.LENGTH_LONG).show()
+                                isTrackPlaying = true
+                                backgroundYoutubeEmbedUrl.value = "https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0"
                             }
                         }
                         true
@@ -744,6 +756,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         player.prepareAsync()
                         withContext(Dispatchers.Main) {
                             mediaPlayer = player
+                            consecutiveLoadFailures = 0 // Reset on local track
                         }
                         return@launch
                     }
@@ -760,10 +773,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     withContext(Dispatchers.Main) {
                         isTrackBuffering = false
-                        Log.e("MainViewModel", "Could not load online audio link.")
+                        Log.e("MainViewModel", "Could not load online audio link. Loading background YouTube embed backup.")
                         if (isActive) {
-                            Toast.makeText(context, "Müzik bağlantısı yüklenemedi", Toast.LENGTH_SHORT).show()
-                            next()
+                            Toast.makeText(context, "Bağlantı hatası. YouTube yedek oynatıcı açılıyor...", Toast.LENGTH_LONG).show()
+                            isTrackPlaying = true
+                            backgroundYoutubeEmbedUrl.value = "https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0"
                         }
                     }
                 }
@@ -771,6 +785,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.Main) {
                     isTrackBuffering = false
                     Log.e("MainViewModel", "Exception loading DataSource to MediaPlayer", e)
+                    if (isActive) {
+                        Toast.makeText(context, "Bağlantı hatası. YouTube yedek oynatıcı açılıyor...", Toast.LENGTH_LONG).show()
+                        isTrackPlaying = true
+                        backgroundYoutubeEmbedUrl.value = "https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0"
+                    }
                 }
             } finally {
                 withContext(kotlinx.coroutines.NonCancellable) {
@@ -785,6 +804,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun togglePlay() {
         val player = mediaPlayer
         if (player == null) {
+            val embedUrl = backgroundYoutubeEmbedUrl.value
+            if (!embedUrl.isNullOrEmpty()) {
+                if (isTrackPlaying) {
+                    backgroundYoutubeEmbedUrl.value = null
+                    isTrackPlaying = false
+                    currentTrack?.let { showNotification(it, false) }
+                } else {
+                    currentTrack?.let { song ->
+                        backgroundYoutubeEmbedUrl.value = "https://www.youtube.com/embed/${song.id}?autoplay=1&mute=0"
+                        isTrackPlaying = true
+                        showNotification(song, true)
+                    }
+                }
+                return
+            }
+            
             currentTrack?.let { playTrack(it, currentQueue) }
             return
         }
@@ -888,6 +923,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         playerInitJob?.cancel()
         playerInitJob = null
         stopProgressTracker()
+        backgroundYoutubeEmbedUrl.value = null
         
         val notificationManager = getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         notificationManager.cancel(1)
