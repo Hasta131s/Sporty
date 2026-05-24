@@ -64,6 +64,8 @@ fun DashboardScreen(viewModel: MainViewModel, onOpenAdmin: () -> Unit) {
                         isBuffering = viewModel.isTrackBuffering,
                         progress = viewModel.trackCurrentPosition,
                         onTogglePlay = { viewModel.togglePlay() },
+                        onNext = { viewModel.next() },
+                        onPrev = { viewModel.prev() },
                         onExpand = { isPlayerExpanded = true },
                         isLiked = viewModel.favoritesList.collectAsState().value.any { it.songId == track.id },
                         onToggleLike = { viewModel.toggleFavorite(track) }
@@ -1379,6 +1381,8 @@ fun MiniPlayer(
     isLiked: Boolean,
     onToggleLike: () -> Unit,
     onTogglePlay: () -> Unit,
+    onNext: () -> Unit,
+    onPrev: () -> Unit,
     onExpand: () -> Unit
 ) {
     Column(
@@ -1433,6 +1437,14 @@ fun MiniPlayer(
                 )
             }
 
+            IconButton(onClick = onPrev, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    imageVector = Icons.Default.SkipPrevious,
+                    contentDescription = "Prev",
+                    tint = Color.White
+                )
+            }
+
             IconButton(onClick = onTogglePlay, modifier = Modifier.size(36.dp)) {
                 if (isBuffering) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
@@ -1445,17 +1457,30 @@ fun MiniPlayer(
                     )
                 }
             }
+
+            IconButton(onClick = onNext, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    imageVector = Icons.Default.SkipNext,
+                    contentDescription = "Next",
+                    tint = Color.White
+                )
+            }
         }
         
         // Fine progress bar on extremely bottom edge
-        LinearProgressIndicator(
-            progress = progress,
-            color = Color.White,
-            trackColor = Color.White.copy(alpha = 0.2f),
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(2.dp)
-        )
+                .background(Color.White.copy(alpha = 0.2f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction = progress.coerceIn(0f, 1f))
+                    .height(2.dp)
+                    .background(Color.White)
+            )
+        }
     }
 }
 
