@@ -520,9 +520,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         recordSearchHistory(query)
 
         viewModelScope.launch(Dispatchers.IO) {
-            val results = MusicApiService.searchYouTube(query)
+            val saavnResults = MusicApiService.searchListenFree(query)
+            val ytResults = MusicApiService.searchYouTube(query)
+            
+            val combinedResults = mutableListOf<Song>()
+            combinedResults.addAll(saavnResults)
+            for (ytSong in ytResults) {
+                if (saavnResults.none { it.title.equals(ytSong.title, ignoreCase = true) && it.artist.equals(ytSong.artist, ignoreCase = true) }) {
+                    combinedResults.add(ytSong)
+                }
+            }
+            
             withContext(Dispatchers.Main) {
-                searchResults = results
+                searchResults = combinedResults
                 isSearching = false
             }
         }
@@ -763,7 +773,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 // Play from Online URL
-                val downloadLink = MusicApiService.getDownloadLink(song.id)
+                val downloadLink = MusicApiService.getDownloadLink(song.id, song.source)
                 if (!downloadLink.isNullOrEmpty() && isActive) {
                     player.setDataSource(downloadLink)
                     player.prepareAsync()

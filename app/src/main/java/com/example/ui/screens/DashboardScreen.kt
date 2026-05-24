@@ -1916,7 +1916,24 @@ fun TrackSearchRowItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(song.title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(song.artist, fontSize = 11.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (song.source == "saavn") {
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            "PREMIUM",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+                Text(song.artist, fontSize = 11.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
 
         IconButton(onClick = onToggleLike) {
